@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
       const errorText = error?.toString() || "";
 
       return (
-        <div className="min-h-screen w-full flex items-center justify-center bg-farm-cream p-6">
+        <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-6">
           <div className="max-w-[640px] w-full space-y-3">
             <div className="bg-white rounded-lg border border-slate-200 p-8 space-y-6">
               <div className="flex flex-col items-center text-center gap-3">

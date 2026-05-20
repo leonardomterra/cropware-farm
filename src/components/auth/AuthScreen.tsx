@@ -82,7 +82,7 @@ export function AuthScreen({
           <button
             type="button"
             onClick={onGoToForgotPassword}
-            className="text-farm-green hover:text-farm-green-dark underline-offset-2 hover:underline"
+            className="text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline"
             disabled={submitting}
           >
             Esqueci minha senha
@@ -90,7 +90,7 @@ export function AuthScreen({
           <button
             type="button"
             onClick={onGoToSignUp}
-            className="text-farm-green hover:text-farm-green-dark underline-offset-2 hover:underline"
+            className="text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline"
             disabled={submitting}
           >
             Criar conta

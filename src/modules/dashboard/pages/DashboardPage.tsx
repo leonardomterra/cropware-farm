@@ -17,7 +17,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <p className="text-xs text-slate-500">Entradas (mes)</p>
-          <p className="text-lg font-semibold text-farm-green-dark mt-1">
+          <p className="text-lg font-semibold text-farm-primary mt-1">
             R$ 0,00
           </p>
         </div>

@@ -101,7 +101,7 @@ export function ReceiptCaptureDialog({
                 onClick={() => cameraInputRef.current?.click()}
                 disabled={scanning}
               >
-                <Camera className="size-6 text-farm-green" />
+                <Camera className="size-6 text-farm-primary" />
                 <span className="text-sm">Tirar foto</span>
               </Button>
               <Button
@@ -111,7 +111,7 @@ export function ReceiptCaptureDialog({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={scanning}
               >
-                <Upload className="size-6 text-farm-green" />
+                <Upload className="size-6 text-farm-primary" />
                 <span className="text-sm">Galeria</span>
               </Button>
             </div>

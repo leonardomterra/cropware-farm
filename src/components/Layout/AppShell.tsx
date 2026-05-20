@@ -9,6 +9,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -48,8 +49,8 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             cn(
               "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
               isActive
-                ? "bg-farm-green text-white"
-                : "text-slate-700 hover:bg-farm-cream",
+                ? "bg-farm-primary text-white"
+                : "text-slate-700 hover:bg-slate-100",
             )
           }
         >
@@ -63,12 +64,10 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 function FarmBrand({ subtitle }: { subtitle?: string }) {
   return (
-    <div className="px-4 py-4 border-b border-slate-200">
-      <h1 className="text-base font-semibold text-farm-green-dark leading-tight">
-        Cropware Farm
-      </h1>
+    <div className="bg-farm-primary px-4 py-5">
+      <Logo className="text-white h-5 w-auto" />
       {subtitle ? (
-        <p className="text-xs text-farm-soil mt-0.5 truncate">{subtitle}</p>
+        <p className="text-xs text-white/80 mt-1.5 truncate">{subtitle}</p>
       ) : null}
     </div>
   );
@@ -83,7 +82,7 @@ function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-2 px-2">
-          <div className="size-7 rounded-full bg-farm-green text-white text-xs font-medium flex items-center justify-center">
+          <div className="size-7 rounded-full bg-farm-primary text-white text-xs font-medium flex items-center justify-center">
             {firstName.charAt(0).toUpperCase()}
           </div>
           <span className="hidden sm:inline text-sm text-slate-700">
@@ -120,7 +119,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-farm-cream">
+    <div className="min-h-screen flex bg-slate-50">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:flex-col w-60 bg-white border-r border-slate-200 shrink-0">
         <FarmBrand subtitle={user?.organizationName} />
@@ -149,12 +148,10 @@ export function AppShell({ children }: { children?: ReactNode }) {
               </SheetContent>
             </Sheet>
 
-            <div className="md:hidden min-w-0">
-              <p className="text-sm font-semibold text-farm-green-dark leading-tight">
-                Cropware Farm
-              </p>
+            <div className="md:hidden min-w-0 flex flex-col">
+              <Logo className="text-farm-primary h-4 w-auto" />
               {user?.organizationName ? (
-                <p className="text-xs text-farm-soil truncate">
+                <p className="text-xs text-slate-500 truncate mt-0.5">
                   {user.organizationName}
                 </p>
               ) : null}

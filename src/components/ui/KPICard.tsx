@@ -25,7 +25,7 @@ export interface KPICardProps {
 
 const toneClasses: Record<NonNullable<KPICardProps['tone']>, string> = {
   default: 'text-slate-500',
-  green: 'text-farm-green-dark',
+  green: 'text-farm-primary',
   amber: 'text-amber-700',
   red: 'text-red-700',
   slate: 'text-slate-500',
@@ -47,7 +47,7 @@ export function KPICard({ title, value, unit, delta, trend = null, icon, tooltip
   const isClickable = !!onClick;
   return (
     <Card
-      className={`border-slate-200 bg-white shadow-none ${isClickable ? 'cursor-pointer hover:border-farm-green/40 hover:shadow-md transition-all' : ''}`}
+      className={`border-slate-200 bg-white shadow-none ${isClickable ? 'cursor-pointer hover:border-farm-primary/40 hover:shadow-md transition-all' : ''}`}
       onClick={onClick}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

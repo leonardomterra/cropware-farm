@@ -45,8 +45,8 @@ function AuthFlow() {
 
 function LoadingScreen() {
   return (
-    <main className="min-h-screen bg-farm-cream flex items-center justify-center">
-      <p className="text-farm-soil text-sm">Carregando...</p>
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <p className="text-slate-500 text-sm">Carregando...</p>
     </main>
   );
 }

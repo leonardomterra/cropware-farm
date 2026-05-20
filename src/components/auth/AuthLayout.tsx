@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Logo } from "@/components/Logo";
 
 interface AuthLayoutProps {
   title: string;
@@ -8,13 +9,11 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
-    <main className="min-h-screen bg-farm-cream flex items-center justify-center p-4">
+    <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-farm-green-dark">
-            Cropware Farm
-          </h1>
-          <p className="text-sm text-farm-soil mt-1">A fazenda no celular.</p>
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Logo className="text-farm-primary h-7 w-auto" />
+          <p className="text-sm text-slate-500 mt-2">A fazenda no celular.</p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
           <h2 className="text-lg font-medium text-slate-900 mb-1">{title}</h2>

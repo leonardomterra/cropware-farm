@@ -163,7 +163,7 @@ export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
         <button
           type="button"
           onClick={onGoToLogin}
-          className="text-sm text-farm-green hover:text-farm-green-dark underline-offset-2 hover:underline mt-2"
+          className="text-sm text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline mt-2"
           disabled={submitting}
         >
           Ja tenho conta - entrar

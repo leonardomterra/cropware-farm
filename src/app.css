@@ -2,23 +2,17 @@
 
 /* ==========================================================
    TAILWIND V4 THEME - CROPWARE FARM
-   Paleta: verde campo + trigo + terra (decisao V1 - 2026-05-20)
+   Paleta laranja #FF5C00 + fundos brancos + acessorios slate
+   (V1.5 polish - migracao de verde campo pra laranja).
    ========================================================== */
 
 @theme {
-  /* Farm brand colors */
-  --color-farm-green: #2f7d4e;
-  --color-farm-green-light: #4a9d6a;
-  --color-farm-green-dark: #1f5e3a;
-  --color-farm-wheat: #c89b5d;
-  --color-farm-soil: #6b4423;
-  --color-farm-cream: #f8f4ec;
-  --color-chumbo-800: #333333;
-  --color-chumbo-900: #1a1a1a;
+  --color-farm-primary: #ff5c00;
+  --color-farm-primary-dark: #b34100;
+  --color-farm-primary-darker: #8a3200;
+  --color-farm-primary-darkest: #612400;
 
-  /* shadcn-compat tokens - mapeados pra HSL vars em :root.
-     Quando o commit 3 trouxer shadcn/ui, todos os components
-     ja vao herdar a paleta Farm sem ajuste. */
+  /* shadcn-compat tokens - mapeados pra HSL vars em :root */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -49,7 +43,7 @@
 
 /* ==========================================================
    CSS VARIABLES - shadcn/ui design tokens (HSL)
-   Primary = farm-green #2f7d4e ~= hsl(144, 45%, 34%)
+   Primary = farm-primary #FF5C00 ~= hsl(22, 100%, 50%)
    ========================================================== */
 
 :root {
@@ -62,24 +56,24 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  --primary: 144 45% 34%;
+  --primary: 22 100% 50%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 38 36% 95%;
-  --secondary-foreground: 25 50% 27%;
+  --secondary: 210 20% 96%;
+  --secondary-foreground: 222 47% 11%;
 
-  --muted: 40 20% 96%;
-  --muted-foreground: 220 9% 46%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 215 16% 47%;
 
-  --accent: 33 45% 58%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 22 100% 96%;
+  --accent-foreground: 22 100% 35%;
 
   --destructive: 0 75% 50%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 30 12% 88%;
-  --input: 30 12% 88%;
-  --ring: 144 45% 34%;
+  --border: 214 15% 91%;
+  --input: 214 15% 91%;
+  --ring: 22 100% 50%;
 
   --radius: 6px;
 }
@@ -97,7 +91,7 @@ html,
 body {
   font-family: var(--font-ui);
   font-size: 14px;
-  background: var(--color-farm-cream);
+  background: #ffffff;
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

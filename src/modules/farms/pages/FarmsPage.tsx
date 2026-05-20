@@ -14,8 +14,8 @@ export default function FarmsPage() {
       </header>
 
       <div className="bg-white rounded-lg border border-slate-200 p-4 flex items-center gap-3">
-        <div className="size-10 rounded-lg bg-farm-cream flex items-center justify-center">
-          <Sprout className="size-5 text-farm-green" />
+        <div className="size-10 rounded-lg bg-farm-primary/10 flex items-center justify-center">
+          <Sprout className="size-5 text-farm-primary" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-900 truncate">

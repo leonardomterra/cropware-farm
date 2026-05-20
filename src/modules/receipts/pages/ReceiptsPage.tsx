@@ -168,7 +168,7 @@ export default function ReceiptsPage() {
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3 col-span-2 sm:col-span-1">
           <p className="text-xs text-slate-500">Saldo</p>
-          <p className="text-base font-semibold text-farm-green-dark tabular-nums">
+          <p className="text-base font-semibold text-farm-primary tabular-nums">
             {formatBRL(totalIncome - totalExpenses)}
           </p>
         </div>
