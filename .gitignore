@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Vite
+.vite/
+*.local
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Capacitor (added when ios/ is generated)
+ios/App/build/
+ios/App/Pods/
+ios/App/App/public/
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Claude
+.claude/settings.local.json
