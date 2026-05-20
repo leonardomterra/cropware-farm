@@ -123,8 +123,10 @@ export function AppShell() {
         </div>
       </nav>
 
-      <main className="flex-1 overflow-auto p-4 sm:p-6">
-        <Outlet />
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-384 mx-auto p-4 sm:p-6">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

@@ -5,7 +5,7 @@ export default function DashboardPage() {
   const firstName = user?.fullName.split(" ")[0] || "fazendeiro";
 
   return (
-    <div className="max-w-3xl">
+    <div>
       <h1 className="text-base font-medium text-slate-900 mb-1">
         Ola, {firstName}.
       </h1>

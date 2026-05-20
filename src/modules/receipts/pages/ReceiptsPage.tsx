@@ -129,7 +129,7 @@ export default function ReceiptsPage() {
   };
 
   return (
-    <div className="max-w-5xl">
+    <div>
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
           <h1 className="text-base font-medium text-slate-900">Lancamentos</h1>
