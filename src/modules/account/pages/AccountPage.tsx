@@ -12,7 +12,7 @@ export default function AccountPage() {
   return (
     <div className="max-w-2xl space-y-4">
       <header>
-        <h1 className="text-xl font-semibold text-slate-900">Conta</h1>
+        <h1 className="text-base font-medium text-slate-900">Conta</h1>
         <p className="text-sm text-slate-500 mt-0.5">
           Perfil, assinatura e integracoes.
         </p>

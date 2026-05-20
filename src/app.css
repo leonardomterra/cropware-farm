@@ -83,18 +83,42 @@
 }
 
 /* ==========================================================
-   BASE
-   Regra Cropware: body 14px. Nunca 13px. Titulos 16/18/20.
+   BASE TYPOGRAPHY - Cropware Farm V1.5 (mesmo padrao do CDM)
+   --------------------------------------------------------------
+   * 14px default em quase tudo. Excecoes:
+     - 16px em titulos importantes (page h1, KPI value)
+     - 13px em badges/labels pequenos
+   * font-weight 400 (normal) default; 300 (light) pra texto
+     secundario. Medium/semibold so em casos raros de enfase.
+   * font-variation-settings: "wdth" 90 - aperta levemente.
+     Inter Tight nao tem wdth axis (no-op hoje), mas se trocarmos
+     pra Roboto Flex / Inter Variable no futuro, ja esta preparado.
+   * letter-spacing -0.015em + font-optical-sizing auto.
+   * Anti-serrilhamento: -webkit-font-smoothing antialiased +
+     text-rendering optimizeLegibility.
    ========================================================== */
 
 html,
 body {
-  font-family: var(--font-ui);
-  font-size: 14px;
-  background: #ffffff;
+  background-color: hsl(var(--background));
+  min-height: 100%;
   color: hsl(var(--foreground));
+  font-family: var(--font-ui), "Inter Tight Variable", "Inter Tight",
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  font-optical-sizing: auto;
+  font-variation-settings: "slnt" 0, "wdth" 90, "GRAD" 0, "ROND" 0;
+  letter-spacing: -0.015em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  zoom: 1;
 }
 
 #root {

@@ -69,7 +69,7 @@ export class ErrorBoundary extends Component<Props, State> {
               <div className="flex flex-col items-center text-center gap-3">
                 <AlertTriangle className="size-7 text-amber-400" />
                 <div>
-                  <h1 className="text-lg font-medium text-slate-900">
+                  <h1 className="text-base font-medium text-slate-900">
                     Algo deu errado
                   </h1>
                   <p className="text-sm text-slate-500 mt-1">

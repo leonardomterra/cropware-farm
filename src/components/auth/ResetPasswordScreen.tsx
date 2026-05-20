@@ -27,7 +27,7 @@ export function ResetPasswordScreen() {
           onClick={completePasswordReset}
           className="w-full"
         >
-          Voltar pro login
+          Voltar para o Login
         </Button>
       </AuthLayout>
     );
@@ -69,7 +69,7 @@ export function ResetPasswordScreen() {
           onClick={completePasswordReset}
           className="w-full"
         >
-          Ir pra tela de login
+          Ir para a Tela de Login
         </Button>
       </AuthLayout>
     );
@@ -120,7 +120,7 @@ export function ResetPasswordScreen() {
           disabled={submitting || !password || !confirm}
           className="mt-2"
         >
-          {submitting ? "Salvando..." : "Salvar nova senha"}
+          {submitting ? "Salvando..." : "Salvar Nova Senha"}
         </Button>
       </form>
     </AuthLayout>

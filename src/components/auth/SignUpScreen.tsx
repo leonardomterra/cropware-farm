@@ -65,7 +65,7 @@ export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
           onClick={onGoToLogin}
           className="w-full"
         >
-          Ir pra tela de login
+          Ir para o Login
         </Button>
       </AuthLayout>
     );
@@ -157,7 +157,7 @@ export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
           disabled={submitting || !email || !password || !fullName || !farmName}
           className="mt-2"
         >
-          {submitting ? "Criando..." : "Criar conta"}
+          {submitting ? "Criando..." : "Criar Conta"}
         </Button>
 
         <button
@@ -166,7 +166,7 @@ export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
           className="text-sm text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline mt-2"
           disabled={submitting}
         >
-          Ja tenho conta - entrar
+          Ja Tenho Conta — Entrar
         </button>
       </form>
     </AuthLayout>

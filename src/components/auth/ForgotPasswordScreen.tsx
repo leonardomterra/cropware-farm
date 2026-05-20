@@ -44,7 +44,7 @@ export function ForgotPasswordScreen({
           onClick={onGoToLogin}
           className="w-full"
         >
-          Voltar pro login
+          Voltar para o Login
         </Button>
       </AuthLayout>
     );
@@ -82,7 +82,7 @@ export function ForgotPasswordScreen({
           disabled={submitting || !email}
           className="mt-2"
         >
-          {submitting ? "Enviando..." : "Enviar link"}
+          {submitting ? "Enviando..." : "Enviar Link"}
         </Button>
 
         <button
@@ -91,7 +91,7 @@ export function ForgotPasswordScreen({
           className="text-sm text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline mt-2"
           disabled={submitting}
         >
-          Voltar pro login
+          Voltar para o Login
         </button>
       </form>
     </AuthLayout>

@@ -102,7 +102,7 @@ export function ReceiptCaptureDialog({
                 disabled={scanning}
               >
                 <Camera className="size-6 text-farm-primary" />
-                <span className="text-sm">Tirar foto</span>
+                <span className="text-sm">Tirar Foto</span>
               </Button>
               <Button
                 type="button"
@@ -198,7 +198,7 @@ export function ReceiptCaptureDialog({
               variant="default"
               onClick={handleContinueAnyway}
             >
-              Continuar e preencher
+              Continuar e Preencher
             </Button>
           ) : (
             <Button

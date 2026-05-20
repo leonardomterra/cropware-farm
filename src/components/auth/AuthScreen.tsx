@@ -85,7 +85,7 @@ export function AuthScreen({
             className="text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline"
             disabled={submitting}
           >
-            Esqueci minha senha
+            Esqueci Minha Senha
           </button>
           <button
             type="button"
@@ -93,7 +93,7 @@ export function AuthScreen({
             className="text-farm-primary hover:text-farm-primary-dark underline-offset-2 hover:underline"
             disabled={submitting}
           >
-            Criar conta
+            Criar Conta
           </button>
         </div>
       </form>

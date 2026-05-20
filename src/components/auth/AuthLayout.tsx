@@ -16,7 +16,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
           <p className="text-sm text-slate-500 mt-2">A fazenda no celular.</p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">
-          <h2 className="text-lg font-medium text-slate-900 mb-1">{title}</h2>
+          <h2 className="text-base font-medium text-slate-900 mb-1">{title}</h2>
           {subtitle ? (
             <p className="text-sm text-slate-500 mb-4">{subtitle}</p>
           ) : (

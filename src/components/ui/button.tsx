@@ -4,23 +4,35 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "./utils";
 
+/**
+ * Variants em paleta slate (Farm V1.5 standard). Brand color
+ * #FF5C00 fica reservada pra marca/identidade (header, nav ativo,
+ * destaques), nao pra botoes.
+ *
+ * Mapa funcao -> variant:
+ *   acao principal / confirmacao  -> default (slate-900)
+ *   acao secundaria / informacao  -> secondary (slate-100)
+ *   cancelamento / dismiss        -> outline ou ghost
+ *   destrutivo (excluir)          -> destructive (vermelho, mantem semantica)
+ *   link inline em texto          -> link
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded text-sm font-normal transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive/60",
-        outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        dark:
-          "bg-farm-primary-dark text-white hover:bg-farm-primary-darker",
+        default:
+          "bg-slate-900 text-white hover:bg-slate-800",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-slate-100 text-slate-900 hover:bg-slate-200",
+        outline:
+          "border border-slate-300 bg-white text-slate-900 hover:bg-slate-50",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+        destructive:
+          "bg-red-600 text-white hover:bg-red-700",
+        link:
+          "text-slate-700 underline-offset-2 hover:underline hover:text-slate-900",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
