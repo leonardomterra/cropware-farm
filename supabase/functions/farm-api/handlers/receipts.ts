@@ -1,5 +1,35 @@
 import type { Hono } from "npm:hono";
 import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
+import { extractReceiptFromImage } from "../lib/gemini.ts";
+
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "application/pdf",
+]);
+
+function extFromMime(mime: string): string {
+  switch (mime) {
+    case "image/jpeg": return "jpg";
+    case "image/png": return "png";
+    case "image/webp": return "webp";
+    case "image/heic": return "heic";
+    case "application/pdf": return "pdf";
+    default: return "bin";
+  }
+}
+
+function decodeBase64ToBytes(base64: string): Uint8Array {
+  // strip data URL prefix se vier "data:image/jpeg;base64,..."
+  const clean = base64.includes(",") ? base64.split(",")[1] : base64;
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 /**
  * Rotas de farm_receipts. Auth via JWT do user; RLS scopes por org.
@@ -92,6 +122,8 @@ export function mountReceiptRoutes(app: Hono) {
         description: body.description ?? null,
         category: body.category ?? null,
         invoice_number: body.invoice_number ?? null,
+        attachment_key: body.attachment_key ?? null,
+        attachment_mime: body.attachment_mime ?? null,
         notes: body.notes ?? null,
         source: body.source ?? "manual",
         ai_confidence: body.ai_confidence ?? null,
@@ -189,7 +221,84 @@ export function mountReceiptRoutes(app: Hono) {
     }
   });
 
-  app.post("/receipts/scan", (c) =>
-    c.json({ error: "not_implemented", todo: "commit_8c" }, 501),
-  );
+  /**
+   * Upload imagem + OCR Gemini. NAO cria farm_receipts - so retorna
+   * campos extraidos + attachment_key. Cliente revisa e cria via
+   * POST /receipts normal com attachment_key referenciado.
+   */
+  app.post("/receipts/scan", async (c) => {
+    try {
+      const client = getUserClient(c.req.raw);
+      const auth = await requireFarmUser(client);
+      if (auth.error) return auth.error;
+
+      const body = await c.req.json().catch(() => null);
+      const imageBase64 = body?.image_base64;
+      const mimeType = body?.mime_type;
+
+      if (typeof imageBase64 !== "string" || typeof mimeType !== "string") {
+        return c.json(
+          { error: "image_base64 e mime_type obrigatorios" },
+          400,
+        );
+      }
+      if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+        return c.json({ error: `mime_type nao permitido: ${mimeType}` }, 400);
+      }
+
+      let bytes: Uint8Array;
+      try {
+        bytes = decodeBase64ToBytes(imageBase64);
+      } catch (err) {
+        console.error("[scan] base64 decode failed:", err);
+        return c.json({ error: "invalid_base64" }, 400);
+      }
+      if (bytes.byteLength > 10 * 1024 * 1024) {
+        return c.json({ error: "image_too_large_10mb_max" }, 413);
+      }
+
+      const admin = getSupabaseAdmin();
+      const yyyymm = new Date().toISOString().slice(0, 7);
+      const uuid = crypto.randomUUID();
+      const ext = extFromMime(mimeType);
+      const key = `org-${auth.organizationId}/${yyyymm}/${uuid}.${ext}`;
+
+      const { error: uploadError } = await admin.storage
+        .from("farm-receipts")
+        .upload(key, bytes, { contentType: mimeType, upsert: false });
+
+      if (uploadError) {
+        console.error("[scan] upload failed:", uploadError);
+        return c.json({ error: `upload_failed: ${uploadError.message}` }, 500);
+      }
+
+      // Clean base64 (sem data URL prefix) pra Gemini
+      const cleanB64 = imageBase64.includes(",")
+        ? imageBase64.split(",")[1]
+        : imageBase64;
+
+      const gemini = await extractReceiptFromImage(cleanB64, mimeType);
+
+      if (!gemini.ok) {
+        // Upload feito mas OCR falhou - retorna pra cliente decidir
+        return c.json({
+          ok: true,
+          attachment_key: key,
+          attachment_mime: mimeType,
+          extracted: null,
+          scan_error: gemini.error,
+        });
+      }
+
+      return c.json({
+        ok: true,
+        attachment_key: key,
+        attachment_mime: mimeType,
+        extracted: gemini.data,
+      });
+    } catch (resp) {
+      if (resp instanceof Response) return resp;
+      throw resp;
+    }
+  });
 }

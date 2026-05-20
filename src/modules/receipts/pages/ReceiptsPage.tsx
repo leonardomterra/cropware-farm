@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Receipt as ReceiptIcon } from "lucide-react";
+import { Camera, Plus, Receipt as ReceiptIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -16,14 +16,73 @@ import { ReceiptFiltersBar } from "../components/ReceiptFiltersBar";
 import { ReceiptsTable } from "../components/ReceiptsTable";
 import { ReceiptsCards } from "../components/ReceiptsCards";
 import { ReceiptFormDialog } from "../components/ReceiptFormDialog";
+import { ReceiptCaptureDialog } from "../components/ReceiptCaptureDialog";
 import { deleteReceipt, useReceipts } from "../hooks/useReceipts";
-import type { Receipt, ReceiptFilters } from "../types";
-import { formatBRL } from "../utils/receiptFormatters";
+import type { ScanResult } from "../hooks/useReceiptScanner";
+import type {
+  Receipt,
+  ReceiptDirection,
+  ReceiptDocType,
+  ReceiptFilters,
+  ReceiptPaymentMethod,
+  ReceiptStatus,
+} from "../types";
+import { formatBRL, todayISO } from "../utils/receiptFormatters";
+import { STATUSES_BY_DIRECTION } from "../constants";
+
+interface PrefillFromScan {
+  values: {
+    direction?: ReceiptDirection;
+    doc_type?: ReceiptDocType;
+    status?: ReceiptStatus;
+    total_value?: string;
+    vendor?: string;
+    category?: string;
+    description?: string;
+    payment_method?: ReceiptPaymentMethod | "";
+    transaction_date?: string;
+    invoice_number?: string;
+  };
+  attachment_key: string;
+  attachment_mime: string;
+  ai_confidence?: number | null;
+  ai_raw?: unknown;
+}
+
+function scanToPrefill(scan: ScanResult): PrefillFromScan {
+  const e = scan.extracted;
+  const direction: ReceiptDirection = e?.direction ?? "expense";
+  const defaultStatus = STATUSES_BY_DIRECTION[direction][0];
+
+  return {
+    attachment_key: scan.attachment_key,
+    attachment_mime: scan.attachment_mime,
+    ai_confidence: e?.confidence ?? null,
+    ai_raw: e,
+    values: {
+      direction,
+      doc_type: e?.doc_type ?? "cupom",
+      status: defaultStatus,
+      total_value:
+        e?.total_value != null
+          ? String(e.total_value).replace(".", ",")
+          : "",
+      vendor: e?.vendor ?? "",
+      category: e?.category ?? "",
+      description: e?.description ?? "",
+      payment_method: e?.payment_method ?? "",
+      transaction_date: e?.transaction_date ?? todayISO(),
+      invoice_number: e?.invoice_number ?? "",
+    },
+  };
+}
 
 export default function ReceiptsPage() {
   const [filters, setFilters] = useState<ReceiptFilters>({});
   const [formOpen, setFormOpen] = useState(false);
+  const [captureOpen, setCaptureOpen] = useState(false);
   const [editing, setEditing] = useState<Receipt | null>(null);
+  const [prefill, setPrefill] = useState<PrefillFromScan | null>(null);
   const [pendingDelete, setPendingDelete] = useState<Receipt | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -39,11 +98,19 @@ export default function ReceiptsPage() {
 
   const openCreate = () => {
     setEditing(null);
+    setPrefill(null);
     setFormOpen(true);
   };
 
   const openEdit = (r: Receipt) => {
     setEditing(r);
+    setPrefill(null);
+    setFormOpen(true);
+  };
+
+  const handleScanComplete = (scan: ScanResult) => {
+    setEditing(null);
+    setPrefill(scanToPrefill(scan));
     setFormOpen(true);
   };
 
@@ -70,10 +137,20 @@ export default function ReceiptsPage() {
             Despesas e receitas da fazenda.
           </p>
         </div>
-        <Button variant="default" onClick={openCreate}>
-          <Plus className="size-4 mr-1" />
-          Novo lancamento
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCaptureOpen(true)}
+            className="gap-1"
+          >
+            <Camera className="size-4" />
+            Capturar recibo
+          </Button>
+          <Button variant="default" onClick={openCreate}>
+            <Plus className="size-4 mr-1" />
+            Novo lancamento
+          </Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
@@ -138,11 +215,24 @@ export default function ReceiptsPage() {
 
       <ReceiptFormDialog
         open={formOpen}
-        onOpenChange={setFormOpen}
+        onOpenChange={(o) => {
+          setFormOpen(o);
+          if (!o) {
+            setPrefill(null);
+            setEditing(null);
+          }
+        }}
         receipt={editing}
+        prefill={prefill}
         onSaved={() => {
           void refetch();
         }}
+      />
+
+      <ReceiptCaptureDialog
+        open={captureOpen}
+        onOpenChange={setCaptureOpen}
+        onScanComplete={handleScanComplete}
       />
 
       <AlertDialog

@@ -86,6 +86,11 @@ export interface ReceiptInput {
   invoice_number?: string | null;
   notes?: string | null;
   farm_id?: string | null;
+  attachment_key?: string | null;
+  attachment_mime?: string | null;
+  source?: ReceiptSource;
+  ai_confidence?: number | null;
+  ai_raw?: unknown;
 }
 
 export interface FarmCategory {

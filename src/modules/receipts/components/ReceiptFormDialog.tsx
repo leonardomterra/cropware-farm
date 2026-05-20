@@ -39,10 +39,19 @@ import type {
   ReceiptStatus,
 } from "../types";
 
+interface PrefillFromScan {
+  values: Partial<FormState>;
+  attachment_key: string;
+  attachment_mime: string;
+  ai_confidence?: number | null;
+  ai_raw?: unknown;
+}
+
 interface ReceiptFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   receipt?: Receipt | null;
+  prefill?: PrefillFromScan | null;
   onSaved: () => void;
 }
 
@@ -82,6 +91,7 @@ export function ReceiptFormDialog({
   open,
   onOpenChange,
   receipt,
+  prefill,
   onSaved,
 }: ReceiptFormDialogProps) {
   const isEdit = !!receipt;
@@ -108,11 +118,13 @@ export function ReceiptFormDialog({
         invoice_number: receipt.invoice_number ?? "",
         notes: receipt.notes ?? "",
       });
+    } else if (prefill) {
+      setForm({ ...EMPTY, ...prefill.values });
     } else {
       setForm(EMPTY);
     }
     setError(null);
-  }, [open, receipt]);
+  }, [open, receipt, prefill]);
 
   const availableStatuses = useMemo(
     () => STATUSES_BY_DIRECTION[form.direction],
@@ -169,6 +181,15 @@ export function ReceiptFormDialog({
 
       if (isEdit && receipt) {
         await updateReceipt(receipt.id, payload);
+      } else if (prefill) {
+        await createReceipt({
+          ...payload,
+          attachment_key: prefill.attachment_key,
+          attachment_mime: prefill.attachment_mime,
+          source: "photo",
+          ai_confidence: prefill.ai_confidence ?? null,
+          ai_raw: prefill.ai_raw ?? null,
+        });
       } else {
         await createReceipt(payload);
       }
