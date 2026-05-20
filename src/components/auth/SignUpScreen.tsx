@@ -1,0 +1,174 @@
+import { useState, type FormEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/contexts/AuthContext";
+import { AuthLayout } from "./AuthLayout";
+
+interface SignUpScreenProps {
+  onGoToLogin: () => void;
+}
+
+export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
+  const { signUp } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [farmName, setFarmName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<null | {
+    needsConfirmation: boolean;
+  }>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    if (password.length < 6) {
+      setError("A senha precisa ter ao menos 6 caracteres.");
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const result = await signUp({
+        email: email.trim(),
+        password,
+        fullName: fullName.trim(),
+        farmName: farmName.trim(),
+        phone: phone.trim() || undefined,
+      });
+      setSuccess(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao criar conta.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <AuthLayout
+        title="Conta criada"
+        subtitle={
+          success.needsConfirmation
+            ? `Confirme seu e-mail (${email}) pra entrar. Olha tambem a caixa de spam.`
+            : "Tudo pronto. Voce ja pode entrar."
+        }
+      >
+        <Button
+          type="button"
+          variant="default"
+          onClick={onGoToLogin}
+          className="w-full"
+        >
+          Ir pra tela de login
+        </Button>
+      </AuthLayout>
+    );
+  }
+
+  return (
+    <AuthLayout
+      title="Criar conta"
+      subtitle="14 dias gratis. Sem cartao agora."
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="fullName">Seu nome</Label>
+          <Input
+            id="fullName"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
+            required
+            disabled={submitting}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="farmName">Nome da fazenda</Label>
+          <Input
+            id="farmName"
+            value={farmName}
+            onChange={(e) => setFarmName(e.target.value)}
+            placeholder="Ex: Fazenda Vale do Sol"
+            required
+            disabled={submitting}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="email">E-mail</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            inputMode="email"
+            required
+            disabled={submitting}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="password">Senha</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            placeholder="Minimo 6 caracteres"
+            required
+            disabled={submitting}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="phone">
+            Telefone <span className="text-slate-400 font-normal">(opcional)</span>
+          </Label>
+          <Input
+            id="phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(11) 99999-9999"
+            autoComplete="tel"
+            inputMode="tel"
+            disabled={submitting}
+          />
+        </div>
+
+        {error ? (
+          <p className="text-sm text-red-600 mt-1" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        <Button
+          type="submit"
+          variant="default"
+          disabled={submitting || !email || !password || !fullName || !farmName}
+          className="mt-2"
+        >
+          {submitting ? "Criando..." : "Criar conta"}
+        </Button>
+
+        <button
+          type="button"
+          onClick={onGoToLogin}
+          className="text-sm text-farm-green hover:text-farm-green-dark underline-offset-2 hover:underline mt-2"
+          disabled={submitting}
+        >
+          Ja tenho conta - entrar
+        </button>
+      </form>
+    </AuthLayout>
+  );
+}
