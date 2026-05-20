@@ -10,7 +10,7 @@
 
 import { RECEIPT_OCR_PROMPT } from "../prompts/receiptOcr.pt-br.ts";
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 
 interface GeminiSuccess {
   ok: true;

@@ -27,6 +27,7 @@ export function ReceiptCaptureDialog({
   const previewUrlRef = useRef<string | null>(null);
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [lastScan, setLastScan] = useState<ScanResult | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -35,6 +36,7 @@ export function ReceiptCaptureDialog({
       previewUrlRef.current = null;
       setPreviewSrc(null);
       setSelectedFile(null);
+      setLastScan(null);
     }
   }, [open]);
 
@@ -50,10 +52,23 @@ export function ReceiptCaptureDialog({
   const handleProcessar = async () => {
     if (!selectedFile) return;
     const result = await scan(selectedFile);
-    if (result) {
-      onScanComplete(result);
-      onOpenChange(false);
+    if (!result) return;
+
+    const ocrFailed =
+      !!result.scan_error || !result.extracted;
+    if (ocrFailed) {
+      // Mantem o dialog aberto e mostra o erro. User decide se prossegue.
+      setLastScan(result);
+      return;
     }
+    onScanComplete(result);
+    onOpenChange(false);
+  };
+
+  const handleContinueAnyway = () => {
+    if (!lastScan) return;
+    onScanComplete(lastScan);
+    onOpenChange(false);
   };
 
   return (
@@ -145,6 +160,21 @@ export function ReceiptCaptureDialog({
             </p>
           ) : null}
 
+          {lastScan && (lastScan.scan_error || !lastScan.extracted) ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+              <p className="font-medium">A IA nao conseguiu ler o recibo.</p>
+              <p className="mt-1">
+                A foto foi salva. Voce pode continuar e preencher os campos
+                manualmente, ou trocar a foto e tentar de novo.
+              </p>
+              {lastScan.scan_error ? (
+                <p className="mt-2 text-xs font-mono text-amber-700">
+                  Detalhe: {lastScan.scan_error}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           {scanning ? (
             <div className="flex items-center justify-center gap-2 text-sm text-slate-600 py-2">
               <Loader2 className="size-4 animate-spin" />
@@ -162,14 +192,24 @@ export function ReceiptCaptureDialog({
           >
             Cancelar
           </Button>
-          <Button
-            type="button"
-            variant="default"
-            onClick={handleProcessar}
-            disabled={!selectedFile || scanning}
-          >
-            {scanning ? "Processando..." : "Processar"}
-          </Button>
+          {lastScan && (lastScan.scan_error || !lastScan.extracted) ? (
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleContinueAnyway}
+            >
+              Continuar e preencher
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleProcessar}
+              disabled={!selectedFile || scanning}
+            >
+              {scanning ? "Processando..." : "Processar"}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
