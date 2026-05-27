@@ -7,8 +7,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/components/ui/utils";
+import { Badge } from "@/components/ui/badge";
 import type { Receipt } from "../types";
-import { STATUS_LABEL, STATUS_TONE } from "../constants";
+import { STATUS_COLOR_SCHEME, STATUS_LABEL } from "../constants";
 import { formatBRL, formatDateBR } from "../utils/receiptFormatters";
 
 interface ReceiptsCardsProps {
@@ -55,14 +56,9 @@ export function ReceiptsCards({ receipts, onEdit, onDelete }: ReceiptsCardsProps
               {r.category ? ` - ${r.category}` : ""}
             </p>
             <div className="mt-2">
-              <span
-                className={cn(
-                  "inline-flex items-center text-[13px] px-2 py-0.5 rounded border font-medium",
-                  STATUS_TONE[r.status],
-                )}
-              >
+              <Badge colorScheme={STATUS_COLOR_SCHEME[r.status]}>
                 {STATUS_LABEL[r.status]}
-              </span>
+              </Badge>
             </div>
           </div>
 

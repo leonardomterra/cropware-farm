@@ -181,3 +181,15 @@ select,
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* Badges: padronizacao global (padrao CDM). JetBrains Mono 12px
+   UPPERCASE em TODOS os [data-slot="badge"]. !important vence o
+   inline fontSize do componente Badge. */
+[data-slot="badge"] {
+  font-family: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
+    monospace !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+}

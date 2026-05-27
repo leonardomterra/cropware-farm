@@ -13,13 +13,17 @@ export const STATUS_LABEL: Record<ReceiptStatus, string> = {
   cancelado: "Cancelado",
 };
 
-export const STATUS_TONE: Record<ReceiptStatus, string> = {
-  a_pagar: "bg-amber-100 text-amber-800 border-amber-200",
-  pago: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  a_receber: "bg-blue-100 text-blue-800 border-blue-200",
-  recebido: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  vencido: "bg-red-100 text-red-800 border-red-200",
-  cancelado: "bg-slate-100 text-slate-600 border-slate-200",
+/** Mapeia status -> colorScheme do componente Badge (semantica universal). */
+export const STATUS_COLOR_SCHEME: Record<
+  ReceiptStatus,
+  "amber" | "emerald" | "blue" | "red" | "slate"
+> = {
+  a_pagar: "amber",
+  pago: "emerald",
+  a_receber: "blue",
+  recebido: "emerald",
+  vencido: "red",
+  cancelado: "slate",
 };
 
 export const DOC_TYPE_LABEL: Record<ReceiptDocType, string> = {
