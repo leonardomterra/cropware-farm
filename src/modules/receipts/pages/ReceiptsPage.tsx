@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Camera, Plus, Receipt as ReceiptIcon } from "lucide-react";
+import { Camera, Receipt as ReceiptIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -150,7 +150,6 @@ export default function ReceiptsPage() {
             Capturar Recibo
           </Button>
           <Button variant="default" onClick={openCreate}>
-            <Plus className="size-4 mr-1" />
             Novo Lançamento
           </Button>
         </div>

@@ -12,7 +12,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { LogoIcon } from "@/components/Logo";
+import { Logo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/components/ui/utils";
 
@@ -69,13 +69,13 @@ export function AppShell() {
   const days = trialDaysLeft(user?.trialEndsAt);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-white">
       {/* HEADER */}
       <header className="shadow-none" style={{ backgroundColor: "#475569" }}>
         <div className="max-w-[1600px] w-full mx-auto px-3 sm:px-4 py-3 sm:py-4">
           {/* Mobile */}
           <div className="flex md:hidden items-center justify-between">
-            <LogoIcon className="text-white h-7 w-auto" />
+            <Logo className="text-white h-5 w-auto" />
             <button
               onClick={() => void signOut()}
               className="inline-flex items-center justify-center rounded p-2 transition-all active:scale-95"
@@ -88,36 +88,7 @@ export function AppShell() {
 
           {/* Desktop */}
           <div className="hidden md:flex items-center justify-between">
-            <div className="flex items-center">
-              <LogoIcon className="text-white h-9 w-auto shrink-0" />
-              <div
-                className="mx-3"
-                style={{
-                  width: "1px",
-                  height: "24px",
-                  background:
-                    "linear-gradient(to bottom, transparent, rgba(255,255,255,0.35) 30%, rgba(255,255,255,0.35) 70%, transparent)",
-                }}
-              />
-              <p
-                style={{
-                  fontFamily: "'Alumni Sans', sans-serif",
-                  fontSize: "13px",
-                  fontWeight: 800,
-                  letterSpacing: "3px",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.9)",
-                  lineHeight: 1.1,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                Farm Data<span style={{ color: "#cbd5e1" }}>.</span>
-                <br />
-                <span style={{ fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>
-                  Smart Decisions.
-                </span>
-              </p>
-            </div>
+            <Logo className="text-white h-6 w-auto shrink-0" />
 
             <div className="flex items-center gap-3">
               <p
