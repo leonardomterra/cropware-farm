@@ -194,23 +194,31 @@ export default function ReceiptsPage() {
               Nenhum lancamento ainda
             </p>
             <p className="text-sm text-slate-500 mt-1 max-w-xs">
-              Adiciona seu primeiro pelo botao acima. Captura por foto chega no
-              proximo commit.
+              Adiciona seu primeiro pelo botao "Novo Lançamento" ou tira foto
+              de um recibo em "Capturar Recibo".
             </p>
           </div>
         </div>
-      ) : isMobile ? (
-        <ReceiptsCards
-          receipts={receipts}
-          onEdit={openEdit}
-          onDelete={(r) => setPendingDelete(r)}
-        />
       ) : (
-        <ReceiptsTable
-          receipts={receipts}
-          onEdit={openEdit}
-          onDelete={(r) => setPendingDelete(r)}
-        />
+        <>
+          <p className="text-sm text-slate-500 mb-2 px-1">
+            Mostrando {receipts.length}{" "}
+            {receipts.length === 1 ? "lançamento" : "lançamentos"}
+          </p>
+          {isMobile ? (
+            <ReceiptsCards
+              receipts={receipts}
+              onEdit={openEdit}
+              onDelete={(r) => setPendingDelete(r)}
+            />
+          ) : (
+            <ReceiptsTable
+              receipts={receipts}
+              onEdit={openEdit}
+              onDelete={(r) => setPendingDelete(r)}
+            />
+          )}
+        </>
       )}
 
       <ReceiptFormDialog

@@ -44,7 +44,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
   const hasAny = Object.values(value).some((v) => v !== undefined && v !== "");
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-3 flex flex-wrap items-end gap-2">
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex flex-wrap items-end gap-2">
       <div className="flex-1 min-w-[180px] max-w-sm">
         <label className="block text-sm text-slate-500 mb-1">Busca</label>
         <div className="relative">
@@ -55,7 +55,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
               set("search", e.target.value || undefined)
             }
             placeholder="Fornecedor, descricao..."
-            className="pl-8 h-9"
+            className="pl-8 h-9 bg-white"
           />
         </div>
       </div>
@@ -68,7 +68,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
             set("direction", v === "all" ? undefined : (v as ReceiptDirection))
           }
         >
-          <SelectTrigger className="h-9">
+          <SelectTrigger className="h-9 bg-white">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -87,7 +87,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
             set("status", v === "all" ? undefined : (v as ReceiptStatus))
           }
         >
-          <SelectTrigger className="h-9">
+          <SelectTrigger className="h-9 bg-white">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -109,7 +109,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
             set("category", v === "all" ? undefined : v)
           }
         >
-          <SelectTrigger className="h-9">
+          <SelectTrigger className="h-9 bg-white">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -129,7 +129,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
           type="date"
           value={value.from ?? ""}
           onChange={(e) => set("from", e.target.value || undefined)}
-          className="h-9 w-[140px]"
+          className="h-9 w-[140px] bg-white"
         />
       </div>
 
@@ -139,7 +139,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
           type="date"
           value={value.to ?? ""}
           onChange={(e) => set("to", e.target.value || undefined)}
-          className="h-9 w-[140px]"
+          className="h-9 w-[140px] bg-white"
         />
       </div>
 
