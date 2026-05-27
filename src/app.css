@@ -2,15 +2,19 @@
 
 /* ==========================================================
    TAILWIND V4 THEME - CROPWARE FARM
-   Paleta laranja #FF5C00 + fundos brancos + acessorios slate
-   (V1.5 polish - migracao de verde campo pra laranja).
+   Paleta brand SLATE alinhada ao Cropware CDM (Field).
+   Header/nav/logo em slate-600; semantica (emerald/amber/red/blue)
+   universal. Ver cropware-design-system.md.
+   --color-farm-primary mantem o nome do token (menos churn) mas
+   aponta pra slate-600 - "brand do Farm = slate".
    ========================================================== */
 
 @theme {
-  --color-farm-primary: #ff5c00;
-  --color-farm-primary-dark: #b34100;
-  --color-farm-primary-darker: #8a3200;
-  --color-farm-primary-darkest: #612400;
+  --color-farm-primary: #475569; /* slate-600 - brand/header */
+  --color-farm-primary-dark: #334155; /* slate-700 */
+  --color-farm-primary-darker: #1e293b; /* slate-800 */
+  --color-farm-primary-darkest: #0f172a; /* slate-900 */
+  --color-farm-primary-light: #64748b; /* slate-500 - sub-header/secundario */
 
   /* shadcn-compat tokens - mapeados pra HSL vars em :root */
   --color-background: hsl(var(--background));
@@ -43,7 +47,8 @@
 
 /* ==========================================================
    CSS VARIABLES - shadcn/ui design tokens (HSL)
-   Primary = farm-primary #FF5C00 ~= hsl(22, 100%, 50%)
+   Primary = farm-primary slate-600 #475569 ~= hsl(215, 19%, 35%)
+   Radius 4px (padrao CDM).
    ========================================================== */
 
 :root {
@@ -56,7 +61,7 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  --primary: 22 100% 50%;
+  --primary: 215 19% 35%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 210 20% 96%;
@@ -65,17 +70,17 @@
   --muted: 210 20% 96%;
   --muted-foreground: 215 16% 47%;
 
-  --accent: 22 100% 96%;
-  --accent-foreground: 22 100% 35%;
+  --accent: 210 20% 96%;
+  --accent-foreground: 222 47% 11%;
 
   --destructive: 0 75% 50%;
   --destructive-foreground: 0 0% 100%;
 
   --border: 214 15% 91%;
   --input: 214 15% 91%;
-  --ring: 22 100% 50%;
+  --ring: 215 19% 35%;
 
-  --radius: 6px;
+  --radius: 4px;
 }
 
 .native-ios {
@@ -123,4 +128,56 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* ==========================================================
+   REGRAS CRITICAS (padrao CDM - cropware-design-system.md)
+   ========================================================== */
+
+/* Mobile input zoom prevention: iOS faz zoom automatico se font-size
+   < 16px no input em foco. Forca 16px em telas pequenas. */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select,
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="command-input"] {
+    font-size: 16px !important;
+  }
+  input::placeholder,
+  textarea::placeholder,
+  [data-slot="command-input"]::placeholder {
+    font-size: 16px !important;
+  }
+}
+
+/* Scroll stability: evita layout-shift quando Radix Dialog abre
+   (Radix compensa a scrollbar com padding-right; travamos isso). */
+html:root:root {
+  scrollbar-gutter: stable;
+  overflow-y: scroll !important;
+  padding-right: 0 !important;
+}
+body,
+body[style] {
+  padding-right: 0 !important;
+}
+html[data-scroll-locked] {
+  overflow-y: scroll !important;
+  padding-right: 0 !important;
+}
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+}
+
+/* Tap highlight + touch action em elementos interativos. */
+button,
+a,
+input,
+textarea,
+select,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
