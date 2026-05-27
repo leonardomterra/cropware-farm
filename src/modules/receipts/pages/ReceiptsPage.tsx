@@ -257,7 +257,7 @@ export default function ReceiptsPage() {
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              className="bg-slate-800 text-white hover:bg-slate-900 border-0"
             >
               {deleting ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>

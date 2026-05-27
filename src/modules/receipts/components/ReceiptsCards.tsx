@@ -62,7 +62,7 @@ export function ReceiptsCards({ receipts, onEdit, onDelete }: ReceiptsCardsProps
             </div>
           </div>
 
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"

@@ -39,7 +39,7 @@ function UserMenu() {
   const firstName = user.fullName.split(" ")[0] || "Voce";
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
