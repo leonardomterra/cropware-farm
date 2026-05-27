@@ -44,9 +44,9 @@ function UserMenu() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2 px-2 text-white hover:bg-white/15 hover:text-white"
+          className="gap-2 pl-1.5 pr-2.5 h-8 text-white bg-white/10 border border-white/20 hover:bg-white/20 hover:text-white shadow-sm"
         >
-          <div className="size-8 rounded-full bg-white text-farm-primary text-sm font-medium flex items-center justify-center">
+          <div className="size-6 rounded-full bg-white text-farm-primary text-sm font-medium flex items-center justify-center">
             {firstName.charAt(0).toUpperCase()}
           </div>
           <span className="hidden sm:inline text-sm">{firstName}</span>
@@ -99,9 +99,9 @@ export function AppShell() {
         <UserMenu />
       </header>
 
-      {/* Barra de menus horizontal */}
-      <nav className="bg-white border-b border-slate-200 px-2 sm:px-4 shrink-0">
-        <div className="flex items-center gap-0.5 overflow-x-auto">
+      {/* Barra de menus horizontal - tab ativa solid slate (padrao CDM) */}
+      <nav className="bg-white border-b border-slate-200 shrink-0">
+        <div className="flex items-stretch overflow-x-auto">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
@@ -109,10 +109,10 @@ export function AppShell() {
               end={item.end}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-2 px-3 py-3 text-sm transition-colors whitespace-nowrap border-b-2 -mb-px",
+                  "flex items-center gap-2 px-4 h-11 text-sm transition-colors whitespace-nowrap",
                   isActive
-                    ? "border-farm-primary text-farm-primary font-medium"
-                    : "border-transparent text-slate-600 hover:text-slate-900",
+                    ? "bg-farm-primary text-white"
+                    : "text-slate-600 hover:bg-slate-100",
                 )
               }
             >
