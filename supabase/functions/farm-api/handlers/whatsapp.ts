@@ -1,7 +1,7 @@
 import type { Hono } from "npm:hono";
 import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
-import { extractReceiptFromImage } from "../lib/gemini.ts";
+import { extractReceiptFromImage, transcribeAudio } from "../lib/gemini.ts";
 import { uploadToR2 } from "../lib/r2.ts";
 import { runFarmAi, type LinkedUser } from "../lib/farmAi.ts";
 import { getAllowedCostCenterIds, listUserCostCenters } from "../lib/cc.ts";
@@ -417,7 +417,47 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
     return;
   }
 
-  await sendText(from, "🙂 Por enquanto eu processo *fotos e PDFs* de recibos, e converso por texto sobre suas financas.");
+  // 4) Audio (mensagem de voz) -> transcricao Gemini -> runFarmAi
+  if (msg.type === "audio") {
+    if (!linked) {
+      await sendText(
+        from,
+        "🎙️ Recebi seu audio, mas preciso que vincule sua conta primeiro. Gere um codigo de 6 digitos no app e me envie.",
+      );
+      return;
+    }
+    const audio = msg.audio;
+    const mime: string = audio?.mime_type?.split(";")[0]?.trim() || "audio/ogg";
+    await sendText(from, "🎙️ Ouvindo seu audio...");
+    let buf: ArrayBuffer;
+    try {
+      buf = await downloadMedia(audio.id);
+    } catch (e) {
+      console.error("[wa] audio download failed:", e);
+      await sendText(from, "⚠️ Nao consegui baixar o audio. Tenta de novo em alguns segundos.");
+      return;
+    }
+    if (buf.byteLength > 10 * 1024 * 1024) {
+      await sendText(from, "🎙️ Audio acima de 10MB. Manda algo mais curto, por favor.");
+      return;
+    }
+    const tr = await transcribeAudio(bytesToBase64(buf), mime);
+    if (!tr.ok) {
+      console.error("[wa] transcribe failed:", tr.error);
+      await sendText(from, "🤔 Ouvi o audio mas nao consegui entender. Tenta de novo, ou manda por texto.");
+      return;
+    }
+    if (!tr.transcript || tr.transcript === "[inaudivel]") {
+      await sendText(from, "🤔 Nao deu pra entender o audio. Tenta falar mais perto do microfone, ou manda por texto.");
+      return;
+    }
+    await sendText(from, "🎙️ Entendi: _" + tr.transcript + "_");
+    const reply = await runFarmAi(admin, linked, tr.transcript);
+    await sendText(from, reply);
+    return;
+  }
+
+  await sendText(from, "🙂 Por enquanto eu processo *fotos, PDFs e audios* de recibos/financas, e converso por texto.");
 }
 
 export function mountWhatsappRoutes(app: Hono) {

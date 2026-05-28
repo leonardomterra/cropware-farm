@@ -25,7 +25,7 @@ app.get("/health", (c) =>
   c.json({
     ok: true,
     service: "farm-api",
-    version: "0.1.0",
+    version: "0.4.0",
     ts: new Date().toISOString(),
   }),
 );

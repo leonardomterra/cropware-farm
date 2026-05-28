@@ -120,3 +120,87 @@ export async function extractReceiptFromImage(
 
   return { ok: true, data: extracted, rawText: text };
 }
+
+/**
+ * Transcricao de audio via Gemini multimodal. Usado pra mensagens de voz no
+ * WhatsApp ("gastei 800 de adubo na Marambaia") -> texto -> runFarmAi.
+ *
+ * Gemini 3.5 Flash aceita audio inline (ogg/opus do WhatsApp inclusive).
+ * Limite pratico ~9.5MB por inline_data. Para audios maiores usaria Files API,
+ * mas mensagem WhatsApp tem teto de 16MB e voz costuma ficar bem abaixo disso.
+ */
+export async function transcribeAudio(
+  audioBase64: string,
+  mimeType: string,
+): Promise<
+  | { ok: true; transcript: string }
+  | { ok: false; error: string }
+> {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!supabaseUrl || !anonKey) {
+    return { ok: false, error: "missing_supabase_env" };
+  }
+
+  const prompt =
+    "Transcreva fielmente o audio para portugues do Brasil. " +
+    "Devolva SOMENTE o texto transcrito, sem prefixos, sem comentarios, " +
+    "sem aspas. Corrija pontuacao para soar natural. Se o audio estiver " +
+    'inaudivel ou vazio, devolva exatamente "[inaudivel]".';
+
+  const payload = {
+    model: DEFAULT_MODEL,
+    body: {
+      contents: [
+        {
+          parts: [
+            { inline_data: { mime_type: mimeType, data: audioBase64 } },
+            { text: prompt },
+          ],
+        },
+      ],
+      generationConfig: { temperature: 0.0 },
+    },
+  };
+
+  let resp: Response;
+  try {
+    resp = await fetch(`${supabaseUrl}/functions/v1/gemini`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${anonKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error("[gemini audio] network error:", err);
+    return { ok: false, error: "gemini_network_error" };
+  }
+
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    console.error(`[gemini audio] non-2xx ${resp.status}:`, body);
+    return { ok: false, error: `gemini_http_${resp.status}` };
+  }
+
+  let json: unknown;
+  try {
+    json = await resp.json();
+  } catch (err) {
+    console.error("[gemini audio] failed to parse JSON:", err);
+    return { ok: false, error: "gemini_invalid_json" };
+  }
+
+  const text = (json as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[];
+  })?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!text || typeof text !== "string") {
+    console.error("[gemini audio] no text in response:", json);
+    return { ok: false, error: "gemini_no_text" };
+  }
+
+  const cleaned = text.trim().replace(/^["']|["']$/g, "");
+  return { ok: true, transcript: cleaned };
+}
