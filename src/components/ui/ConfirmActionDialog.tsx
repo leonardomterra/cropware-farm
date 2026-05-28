@@ -44,7 +44,7 @@ export function ConfirmActionDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="rounded-lg max-w-4xl" style={{ fontFamily: "'Inter Tight', sans-serif" }}>
+      <AlertDialogContent className="rounded-lg max-w-4xl">
         <AlertDialogHeader className="space-y-3">
           <AlertDialogTitle className="font-medium" style={{ fontSize: '16px', color: '#0f172a' }}>
             {title}

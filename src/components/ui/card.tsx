@@ -33,7 +33,6 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <h4
       data-slot="card-title"
       className={cn("leading-none font-medium", className)}
-      style={{ fontFamily: "'Inter Tight', sans-serif", ...props.style }}
       {...props}
     />
   );

@@ -13,7 +13,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
       richColors
       toastOptions={{
         style: {
-          fontFamily: "'Inter Tight', sans-serif",
           fontWeight: 400,
           fontSize: '0.95rem',
           padding: '16px 20px',

@@ -21,7 +21,7 @@ export function EmptyStateCard({
             }}
         >
             {IconComponent && <IconComponent size={16} style={{ color: '#94a3b8', flexShrink: 0 }} />}
-            <p className="font-normal" style={{ fontFamily: "'Inter Tight', sans-serif", fontSize: '14px', color: '#94a3b8' }}>
+            <p className="font-normal" style={{ fontSize: '14px', color: '#94a3b8' }}>
                 {title}
                 {description && (
                     <span style={{ color: '#cbd5e1' }}> — {description}</span>

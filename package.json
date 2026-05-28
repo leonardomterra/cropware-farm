@@ -15,7 +15,7 @@
   "dependencies": {
     "@capacitor/core": "^8.3.0",
     "@capacitor/preferences": "^8.0.1",
-    "@fontsource-variable/inter-tight": "^5.2.7",
+    "@fontsource-variable/geist": "^5.2.7",
     "@fontsource-variable/jetbrains-mono": "^5.2.5",
     "@fontsource/alumni-sans": "^5.2.8",
     "@radix-ui/react-accordion": "^1.2.3",

@@ -110,7 +110,6 @@ function SheetTitle({
     <SheetPrimitive.Title
       data-slot="sheet-title"
       className={cn("text-foreground font-medium", className)}
-      style={{ fontFamily: "'Inter Tight', sans-serif", ...props.style }}
       {...props}
     />
   );

@@ -52,10 +52,7 @@ export function KPICard({ title, value, unit, delta, trend = null, icon, tooltip
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="flex items-center gap-1.5 min-w-0">
-          <CardTitle
-            className="text-[15px] font-medium text-slate-700 truncate"
-            style={{ fontFamily: "'Inter Tight', sans-serif" }}
-          >
+          <CardTitle className="text-[15px] font-medium text-slate-700 truncate">
             {title}
           </CardTitle>
           {tooltip ? (

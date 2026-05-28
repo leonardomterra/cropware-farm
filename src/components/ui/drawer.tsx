@@ -101,7 +101,6 @@ function DrawerTitle({
     <DrawerPrimitive.Title
       data-slot="drawer-title"
       className={cn("text-foreground font-medium", className)}
-      style={{ fontFamily: "'Inter Tight', sans-serif", ...props.style }}
       {...props}
     />
   );
