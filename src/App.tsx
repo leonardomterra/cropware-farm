@@ -36,6 +36,9 @@ const TeamPage = lazyWithRetry(
 const JoinPage = lazyWithRetry(
   () => import("@/modules/team/pages/JoinPage"),
 );
+const RecurringPage = lazyWithRetry(
+  () => import("@/modules/recurring/pages/RecurringPage"),
+);
 
 type AuthView = "login" | "signup" | "forgot";
 
@@ -136,6 +139,14 @@ function RootRoutes() {
               element={
                 <Suspense fallback={<LoadingScreen />}>
                   <TeamPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="recorrencias"
+              element={
+                <Suspense fallback={<LoadingScreen />}>
+                  <RecurringPage />
                 </Suspense>
               }
             />

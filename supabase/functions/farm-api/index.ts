@@ -15,6 +15,7 @@ import { mountCronRoutes } from "./handlers/cron.ts";
 import { mountCostCenterRoutes } from "./handlers/costCenters.ts";
 import { mountMemberRoutes } from "./handlers/members.ts";
 import { mountInviteRoutes } from "./handlers/invites.ts";
+import { mountRecurringRoutes } from "./handlers/recurring.ts";
 
 const app = new Hono().basePath("/farm-api");
 
@@ -25,7 +26,7 @@ app.get("/health", (c) =>
   c.json({
     ok: true,
     service: "farm-api",
-    version: "0.4.1",
+    version: "0.5.0",
     ts: new Date().toISOString(),
   }),
 );
@@ -39,6 +40,7 @@ mountCronRoutes(app);
 mountCostCenterRoutes(app);
 mountMemberRoutes(app);
 mountInviteRoutes(app);
+mountRecurringRoutes(app);
 
 app.onError((err, c) => {
   console.error("[farm-api] unhandled error:", err);
