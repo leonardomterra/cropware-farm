@@ -5,7 +5,6 @@ import {
   Wifi,
   WifiOff,
   Building2,
-  Clock,
   HelpCircle,
   Settings,
 } from "lucide-react";
@@ -84,18 +83,9 @@ function useOnline() {
   return online;
 }
 
-function trialDaysLeft(trialEndsAt: string | null | undefined): number | null {
-  if (!trialEndsAt) return null;
-  return Math.max(
-    0,
-    Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / 86400000),
-  );
-}
-
 export function AppShell() {
   const { user, signOut, isAdmin } = useAuth();
   const online = useOnline();
-  const days = trialDaysLeft(user?.trialEndsAt);
   const navItems: NavItem[] = [
     ...BASE_NAV_ITEMS,
     ...(isAdmin ? ADMIN_NAV_ITEMS : []),
@@ -168,30 +158,12 @@ export function AppShell() {
             {/* Lado direito - gap-3 entre grupos (padrao CDM).
                 Sub-container agrupa user name + trial badge. */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3">
-                <p
-                  className="text-white font-medium leading-none"
-                  style={{ fontSize: "14px" }}
-                >
-                  {user?.fullName}
-                </p>
-                {days !== null ? (
-                  <span
-                    className="inline-flex items-center gap-1.5 rounded h-8 px-3"
-                    style={{
-                      backgroundColor: "#f59e0b",
-                      color: "#ffffff",
-                      fontWeight: 500,
-                      fontSize: "12px",
-                    }}
-                  >
-                    <Clock className="size-3.5" />
-                    {days <= 0
-                      ? "Trial encerrado"
-                      : `Trial - ${days} ${days === 1 ? "dia" : "dias"}`}
-                  </span>
-                ) : null}
-              </div>
+              <p
+                className="text-white font-medium leading-none"
+                style={{ fontSize: "14px" }}
+              >
+                {user?.fullName}
+              </p>
               {/* Ajuda e Configuracoes sem funcao por enquanto */}
               <GlassButton
                 icon={HelpCircle}
@@ -225,11 +197,11 @@ export function AppShell() {
           <div className="flex flex-col md:flex-row md:justify-end items-stretch md:items-center gap-2">
             {user?.organizationName ? (
               <Badge
-                className="backdrop-blur-sm gap-1.5 px-2.5 py-1 justify-center md:justify-start"
+                className="gap-1.5 px-2.5 py-1 justify-center md:justify-start"
                 style={{
-                  backgroundColor: "rgba(51,65,85,0.45)",
+                  backgroundColor: "transparent",
                   color: "#ffffff",
-                  borderColor: "rgba(100,116,139,0.5)",
+                  borderColor: "transparent",
                 }}
               >
                 <Building2 className="size-3.5" />
@@ -239,13 +211,13 @@ export function AppShell() {
               </Badge>
             ) : null}
             <Badge
-              className="backdrop-blur-sm gap-1.5 px-2.5 py-1 justify-center md:justify-start"
+              className="gap-1.5 px-2.5 py-1 justify-center md:justify-start"
               style={{
-                backgroundColor: online
-                  ? "rgba(51,65,85,0.45)"
-                  : "rgba(15,23,42,0.85)",
+                // online: transparente (herda o slate-500 do sub-header).
+                // offline: fundo escuro pra destacar o estado de alerta.
+                backgroundColor: online ? "transparent" : "rgba(15,23,42,0.85)",
                 color: "#ffffff",
-                borderColor: "rgba(100,116,139,0.5)",
+                borderColor: online ? "transparent" : "rgba(30,41,59,0.9)",
               }}
             >
               {online ? (
