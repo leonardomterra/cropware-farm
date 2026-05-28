@@ -31,9 +31,11 @@ export function getUserClient(req: Request): SupabaseClient {
   });
 }
 
+export type FarmRole = "owner" | "admin" | "member";
+
 /**
- * Resolve o auth.users + organization_id do user atual.
- * Retorna 401 (via Response) se nao autenticado, 403 se sem org linkada.
+ * Resolve o auth.users + organization_id + role do user atual.
+ * Retorna 401 se nao autenticado, 403 se sem org linkada.
  */
 export async function requireFarmUser(client: SupabaseClient) {
   const {
@@ -43,6 +45,7 @@ export async function requireFarmUser(client: SupabaseClient) {
     return {
       user: null,
       organizationId: null,
+      role: null as FarmRole | null,
       error: new Response(
         JSON.stringify({ error: "unauthenticated" }),
         { status: 401, headers: { "content-type": "application/json" } },
@@ -52,7 +55,7 @@ export async function requireFarmUser(client: SupabaseClient) {
 
   const { data: meta, error } = await client
     .from("users_meta")
-    .select("organization_id")
+    .select("organization_id, role")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -60,6 +63,7 @@ export async function requireFarmUser(client: SupabaseClient) {
     return {
       user,
       organizationId: null,
+      role: null as FarmRole | null,
       error: new Response(
         JSON.stringify({ error: "no_organization" }),
         { status: 403, headers: { "content-type": "application/json" } },
@@ -67,5 +71,30 @@ export async function requireFarmUser(client: SupabaseClient) {
     };
   }
 
-  return { user, organizationId: meta.organization_id as string, error: null };
+  const role = (meta.role as FarmRole | null) || "member";
+  return {
+    user,
+    organizationId: meta.organization_id as string,
+    role,
+    error: null,
+  };
+}
+
+/**
+ * Igual ao requireFarmUser mas falha 403 se role nao for owner/admin.
+ * Usar em endpoints de gestao (cost centers, members, invites).
+ */
+export async function requireFarmAdmin(client: SupabaseClient) {
+  const auth = await requireFarmUser(client);
+  if (auth.error) return auth;
+  if (auth.role !== "owner" && auth.role !== "admin") {
+    return {
+      ...auth,
+      error: new Response(
+        JSON.stringify({ error: "forbidden_admin_only" }),
+        { status: 403, headers: { "content-type": "application/json" } },
+      ),
+    };
+  }
+  return auth;
 }

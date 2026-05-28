@@ -20,12 +20,18 @@ interface NavItem {
   end?: boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
+const BASE_NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", end: true },
   { to: "/lancamentos", label: "Lancamentos" },
   { to: "/fazendas", label: "Fazendas" },
-  { to: "/conta", label: "Conta" },
 ];
+
+const ADMIN_NAV_ITEMS: NavItem[] = [
+  { to: "/centros", label: "Centros" },
+  { to: "/equipe", label: "Equipe" },
+];
+
+const ACCOUNT_NAV_ITEM: NavItem = { to: "/conta", label: "Conta" };
 
 /**
  * Botao glass sobre o header colorido (padrao CDM). bg translucido +
@@ -86,9 +92,14 @@ function trialDaysLeft(trialEndsAt: string | null | undefined): number | null {
 }
 
 export function AppShell() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const online = useOnline();
   const days = trialDaysLeft(user?.trialEndsAt);
+  const navItems: NavItem[] = [
+    ...BASE_NAV_ITEMS,
+    ...(isAdmin ? ADMIN_NAV_ITEMS : []),
+    ACCOUNT_NAV_ITEM,
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -246,7 +257,7 @@ export function AppShell() {
       {/* TAB BAR - tabs dividem a largura igualmente (flex-1), sem icone */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-[1600px] w-full mx-auto flex h-12 items-stretch">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}

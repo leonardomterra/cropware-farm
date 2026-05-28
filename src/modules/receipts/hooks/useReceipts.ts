@@ -15,6 +15,7 @@ function filtersToQuery(filters?: ReceiptFilters): string {
   if (filters.status) params.set("status", filters.status);
   if (filters.category) params.set("category", filters.category);
   if (filters.direction) params.set("direction", filters.direction);
+  if (filters.cost_center_id) params.set("cost_center_id", filters.cost_center_id);
   if (filters.search) params.set("search", filters.search);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);

@@ -12,6 +12,9 @@ import { mountUserRoutes } from "./handlers/users.ts";
 import { mountBillingRoutes } from "./handlers/billing.ts";
 import { mountWhatsappRoutes } from "./handlers/whatsapp.ts";
 import { mountCronRoutes } from "./handlers/cron.ts";
+import { mountCostCenterRoutes } from "./handlers/costCenters.ts";
+import { mountMemberRoutes } from "./handlers/members.ts";
+import { mountInviteRoutes } from "./handlers/invites.ts";
 
 const app = new Hono().basePath("/farm-api");
 
@@ -33,6 +36,9 @@ mountUserRoutes(app);
 mountBillingRoutes(app);
 mountWhatsappRoutes(app);
 mountCronRoutes(app);
+mountCostCenterRoutes(app);
+mountMemberRoutes(app);
+mountInviteRoutes(app);
 
 app.onError((err, c) => {
   console.error("[farm-api] unhandled error:", err);

@@ -2,6 +2,8 @@ import type { Hono } from "npm:hono";
 import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
 import { uploadToR2, presignGetUrl } from "../lib/r2.ts";
 import { extractReceiptFromImage } from "../lib/gemini.ts";
+import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
+import { getUserDefaultCostCenter, userCanAccessCC } from "../lib/cc.ts";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
@@ -52,6 +54,7 @@ export function mountReceiptRoutes(app: Hono) {
       const status = q.get("status");
       const category = q.get("category");
       const direction = q.get("direction");
+      const costCenterId = q.get("cost_center_id");
       const search = q.get("search")?.trim();
       const from = q.get("from");
       const to = q.get("to");
@@ -67,6 +70,7 @@ export function mountReceiptRoutes(app: Hono) {
       if (status) query = query.eq("status", status);
       if (category) query = query.eq("category", category);
       if (direction) query = query.eq("direction", direction);
+      if (costCenterId) query = query.eq("cost_center_id", costCenterId);
       if (from) query = query.gte("transaction_date", from);
       if (to) query = query.lte("transaction_date", to);
       if (search) {
@@ -104,10 +108,29 @@ export function mountReceiptRoutes(app: Hono) {
         );
       }
 
+      // Cost center: usa o que veio, ou default do user. Valida acesso pra cortar
+      // erro feio de RLS depois.
+      const admin = getSupabaseAdmin();
+      let costCenterId: string | null = typeof body.cost_center_id === "string"
+        ? body.cost_center_id
+        : null;
+      if (costCenterId) {
+        const ok = await userCanAccessCC(admin, auth.user!.id, costCenterId);
+        if (!ok) return c.json({ error: "no_access_to_cost_center" }, 403);
+      } else {
+        const def = await getUserDefaultCostCenter(
+          admin,
+          auth.user!.id,
+          auth.organizationId!,
+        );
+        costCenterId = def?.id ?? null;
+      }
+
       const row = {
         organization_id: auth.organizationId,
         created_by: auth.user!.id,
         farm_id: body.farm_id ?? null,
+        cost_center_id: costCenterId,
         doc_type: String(body.doc_type),
         direction: body.direction ?? "expense",
         status: body.status ?? "a_pagar",
@@ -159,6 +182,7 @@ export function mountReceiptRoutes(app: Hono) {
       // Whitelist - nao deixa user trocar org_id, created_by, id, timestamps
       const ALLOWED = [
         "farm_id",
+        "cost_center_id",
         "doc_type",
         "direction",
         "status",
@@ -182,6 +206,17 @@ export function mountReceiptRoutes(app: Hono) {
       }
       if (Object.keys(patch).length === 0) {
         return c.json({ error: "no_fields_to_update" }, 400);
+      }
+
+      // Valida acesso ao novo cost_center_id se sendo trocado.
+      if (typeof patch.cost_center_id === "string") {
+        const admin = getSupabaseAdmin();
+        const ok = await userCanAccessCC(
+          admin,
+          auth.user!.id,
+          patch.cost_center_id,
+        );
+        if (!ok) return c.json({ error: "no_access_to_cost_center" }, 403);
       }
 
       const { data, error } = await client

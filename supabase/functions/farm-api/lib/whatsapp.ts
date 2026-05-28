@@ -90,6 +90,34 @@ export async function downloadMedia(mediaId: string): Promise<ArrayBuffer> {
 }
 
 /** ArrayBuffer -> base64 (em chunks pra nao estourar o stack). */
+/** Lista interativa (ate 10 rows). Usado pra seletor de Centro de Custo quando >3 CCs. */
+export function sendList(
+  to: string,
+  body: string,
+  buttonText: string,
+  sections: Array<{ title?: string; rows: Array<{ id: string; title: string; description?: string }> }>,
+): Promise<void> {
+  return postMessage({
+    to,
+    type: "interactive",
+    interactive: {
+      type: "list",
+      body: { text: body.slice(0, 1024) },
+      action: {
+        button: buttonText.slice(0, 20),
+        sections: sections.slice(0, 10).map((s) => ({
+          ...(s.title ? { title: s.title.slice(0, 24) } : {}),
+          rows: s.rows.slice(0, 10).map((r) => ({
+            id: r.id,
+            title: r.title.slice(0, 24),
+            ...(r.description ? { description: r.description.slice(0, 72) } : {}),
+          })),
+        })),
+      },
+    },
+  });
+}
+
 export function bytesToBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
   let binary = "";

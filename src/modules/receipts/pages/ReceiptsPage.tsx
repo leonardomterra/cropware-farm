@@ -13,6 +13,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from "@/components/ui/use-mobile";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 import { ReceiptFiltersBar } from "../components/ReceiptFiltersBar";
 import { ReceiptsTable } from "../components/ReceiptsTable";
 import { ReceiptsCards } from "../components/ReceiptsCards";
@@ -79,7 +81,12 @@ function scanToPrefill(scan: ScanResult): PrefillFromScan {
 }
 
 export default function ReceiptsPage() {
+  const { user } = useAuth();
+  const userCCs = user?.costCenters ?? [];
+  const showTabs = userCCs.length > 1;
+
   const [filters, setFilters] = useState<ReceiptFilters>({});
+  const [activeCCId, setActiveCCId] = useState<string>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [editing, setEditing] = useState<Receipt | null>(null);
@@ -87,7 +94,11 @@ export default function ReceiptsPage() {
   const [pendingDelete, setPendingDelete] = useState<Receipt | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const { receipts, loading, error, refetch } = useReceipts(filters);
+  const effectiveFilters: ReceiptFilters = activeCCId !== "all"
+    ? { ...filters, cost_center_id: activeCCId }
+    : filters;
+
+  const { receipts, loading, error, refetch } = useReceipts(effectiveFilters);
   const isMobile = useIsMobile();
 
   const totalExpenses = receipts
@@ -175,6 +186,25 @@ export default function ReceiptsPage() {
           </p>
         </div>
       </div>
+
+      {showTabs && (
+        <div className="mb-3 -mx-1 overflow-x-auto">
+          <Tabs value={activeCCId} onValueChange={setActiveCCId}>
+            <TabsList className="bg-slate-100">
+              <TabsTrigger value="all">Todos</TabsTrigger>
+              {userCCs.map((cc) => (
+                <TabsTrigger key={cc.id} value={cc.id}>
+                  <span
+                    className="size-2 rounded-full mr-1.5 inline-block"
+                    style={{ backgroundColor: cc.color || "#64748b" }}
+                  />
+                  {cc.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
 
       <div className="mb-3">
         <ReceiptFiltersBar value={filters} onChange={setFilters} />

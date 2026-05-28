@@ -13,16 +13,32 @@ import {
   getSessionTokens,
   persistSessionTokens,
 } from "@/utils/sessionStorage";
+import { api } from "@/utils/api";
+
+export type FarmRole = "owner" | "admin" | "member";
+
+export interface CostCenter {
+  id: string;
+  organization_id: string;
+  slug: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  is_default: boolean;
+}
 
 export interface FarmUser {
   id: string;
   email: string;
   fullName: string;
-  role: "owner" | "manager" | "viewer";
+  role: FarmRole;
   organizationId: string;
   organizationName: string;
   trialEndsAt: string | null;
   planCode: string | null;
+  whatsappLinked: boolean;
+  allowedCostCenterIds: "all" | string[];
+  costCenters: CostCenter[];
 }
 
 export interface SignUpInput {
@@ -34,11 +50,33 @@ export interface SignUpInput {
   cpf?: string;
 }
 
+interface AuthMeResponse {
+  user: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    phone: string | null;
+    whatsapp_linked: boolean;
+  };
+  role: FarmRole;
+  organization: {
+    id: string;
+    name: string;
+    trial_started_at: string | null;
+    trial_ends_at: string | null;
+  } | null;
+  allowed_cost_center_ids: "all" | string[];
+  cost_centers: CostCenter[];
+}
+
 interface AuthContextType {
   user: FarmUser | null;
   loading: boolean;
   isResettingPassword: boolean;
   resetError: string | null;
+  isAdmin: boolean;
+  canAccessCC: (ccId: string) => boolean;
+  refreshUser: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (input: SignUpInput) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
@@ -49,41 +87,30 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function fetchUserProfile(
-  userId: string,
-  email: string,
-): Promise<FarmUser | null> {
-  const { data, error } = await supabase
-    .from("users_meta")
-    .select(
-      `user_id, role, full_name, organization_id, organizations:organization_id ( id, name, trial_ends_at, plan_code )`,
-    )
-    .eq("user_id", userId)
-    .single();
-
-  if (error || !data) {
-    console.warn("[fetchUserProfile] failed:", error?.message);
+async function fetchUserProfile(): Promise<FarmUser | null> {
+  try {
+    const me = await api<AuthMeResponse>("/auth/me", { method: "GET" });
+    if (!me.organization) {
+      console.warn("[fetchUserProfile] user has no organization linked");
+      return null;
+    }
+    return {
+      id: me.user.id,
+      email: me.user.email,
+      fullName: me.user.full_name ?? "",
+      role: me.role,
+      organizationId: me.organization.id,
+      organizationName: me.organization.name,
+      trialEndsAt: me.organization.trial_ends_at ?? null,
+      planCode: null,
+      whatsappLinked: me.user.whatsapp_linked,
+      allowedCostCenterIds: me.allowed_cost_center_ids,
+      costCenters: me.cost_centers ?? [],
+    };
+  } catch (err) {
+    console.warn("[fetchUserProfile] failed:", err);
     return null;
   }
-
-  const org = Array.isArray(data.organizations)
-    ? data.organizations[0]
-    : data.organizations;
-  if (!org) {
-    console.warn("[fetchUserProfile] user has no organization linked");
-    return null;
-  }
-
-  return {
-    id: userId,
-    email,
-    fullName: data.full_name ?? "",
-    role: (data.role ?? "owner") as FarmUser["role"],
-    organizationId: org.id,
-    organizationName: org.name,
-    trialEndsAt: org.trial_ends_at ?? null,
-    planCode: org.plan_code ?? null,
-  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -99,7 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const init = async () => {
       try {
-        // URL hash: password recovery, errors
         const hashParams = new URLSearchParams(
           window.location.hash.substring(1),
         );
@@ -130,7 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           accessTokenFromUrl &&
           refreshTokenFromUrl
         ) {
-          // Aplica a sessao de recuperacao no client pra permitir updateUser
           await supabase.auth.setSession({
             access_token: accessTokenFromUrl,
             refresh_token: refreshTokenFromUrl,
@@ -141,7 +166,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // Sessao persistida
         const { accessToken, refreshToken } = await getSessionTokens();
         if (!accessToken || !refreshToken) {
           setLoading(false);
@@ -159,10 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const profile = await fetchUserProfile(
-          data.user.id,
-          data.user.email ?? "",
-        );
+        const profile = await fetchUserProfile();
         if (profile) {
           setUser(profile);
           await persistSessionTokens(
@@ -184,6 +205,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void init();
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const profile = await fetchUserProfile();
+    if (profile) setUser(profile);
+  }, []);
+
   const signIn = useCallback(async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -199,10 +225,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data.session.expires_at ?? null,
     );
 
-    const profile = await fetchUserProfile(data.user.id, data.user.email ?? "");
+    const profile = await fetchUserProfile();
     if (!profile) {
       throw new Error(
-        "Sua conta esta sem fazenda vinculada. Contate o suporte.",
+        "Sua conta esta sem organizacao vinculada. Contate o suporte.",
       );
     }
     setUser(profile);
@@ -229,13 +255,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(translateAuthError(error.message));
       }
 
-      // Supabase retorna identities vazio quando email ja existe
       if (data.user?.identities && data.user.identities.length === 0) {
         throw new Error("Este e-mail ja esta cadastrado.");
       }
 
-      // Quando email confirmation esta ON (default), session vem null
-      // ate o user clicar no link de confirmacao
       const needsConfirmation = !data.session;
       if (data.session && data.user) {
         await persistSessionTokens(
@@ -243,10 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data.session.refresh_token,
           data.session.expires_at ?? null,
         );
-        const profile = await fetchUserProfile(
-          data.user.id,
-          data.user.email ?? "",
-        );
+        const profile = await fetchUserProfile();
         if (profile) setUser(profile);
       }
       return { needsConfirmation };
@@ -283,6 +303,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.reload();
   }, []);
 
+  const isAdmin = user?.role === "owner" || user?.role === "admin";
+  const canAccessCC = useCallback(
+    (ccId: string): boolean => {
+      if (!user) return false;
+      if (user.allowedCostCenterIds === "all") return true;
+      return user.allowedCostCenterIds.includes(ccId);
+    },
+    [user],
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -290,6 +320,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isResettingPassword,
         resetError,
+        isAdmin,
+        canAccessCC,
+        refreshUser,
         signIn,
         signUp,
         signOut,

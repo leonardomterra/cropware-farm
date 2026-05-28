@@ -3,25 +3,26 @@ import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
 import { extractReceiptFromImage } from "../lib/gemini.ts";
 import { uploadToR2 } from "../lib/r2.ts";
-import { runFarmAi } from "../lib/farmAi.ts";
+import { runFarmAi, type LinkedUser } from "../lib/farmAi.ts";
+import { getAllowedCostCenterIds, listUserCostCenters } from "../lib/cc.ts";
 import {
   bytesToBase64,
   downloadMedia,
   sendButtons,
+  sendList,
   sendText,
 } from "../lib/whatsapp.ts";
 
 /**
- * Webhook WhatsApp Business (Meta) do Farm — Fase A.
+ * Webhook WhatsApp Business (Meta) do Farm.
  *
- * Fluxo da joia: usuario manda foto/PDF do recibo -> OCR Gemini -> bot mostra
- * os campos -> usuario confirma no chat -> cria farm_receipts (source=whatsapp).
+ * Fluxo da joia: foto/PDF -> OCR -> bot mostra dados + CC -> usuario confirma
+ * (ou troca o CC) -> cria farm_receipts (source=whatsapp).
  *
- * PNID filter e ESSENCIAL: a Meta entrega na mesma URL webhooks de qualquer
- * numero da WABA. So processamos o numero do Farm (WHATSAPP_FARM_BOT_PNID).
+ * RBAC + CC: bot respeita os centros de custo permitidos pro user via
+ * lib/cc.ts. Member ve/cria so nos CCs liberados; owner/admin ve tudo.
  *
- * Webhook e publico (deploy --no-verify-jwt) -> tudo via service_role.
- * Conversa livre (function calling Gemini) fica pra Fase B.
+ * PNID filter, dedup, background processing, safety net por mensagem.
  */
 
 const APP_URL = "https://farm.cropware.com.br";
@@ -33,7 +34,7 @@ const OCR_MIMES = new Set([
   "application/pdf",
 ]);
 
-// Dedup em memoria: Meta retenta se a resposta demora. Guarda ids recentes.
+// Dedup em memoria: Meta retenta se a resposta demora.
 const seenMessageIds = new Map<string, number>();
 const DEDUP_TTL_MS = 5 * 60_000;
 function alreadyHandled(id: string): boolean {
@@ -46,8 +47,6 @@ function alreadyHandled(id: string): boolean {
   return false;
 }
 
-// Roda trabalho pesado fora do ciclo da resposta quando o runtime permite;
-// senao aguarda (dedup garante que o retry da Meta nao reprocessa).
 function runBackground(work: Promise<unknown>): Promise<void> | void {
   // deno-lint-ignore no-explicit-any
   const er = (globalThis as any).EdgeRuntime;
@@ -60,12 +59,6 @@ function runBackground(work: Promise<unknown>): Promise<void> | void {
 
 // ---------- state helpers (service_role) ----------
 
-interface LinkedUser {
-  user_id: string;
-  organization_id: string;
-  user_name: string | null;
-}
-
 // deno-lint-ignore no-explicit-any
 async function getLinkedUser(admin: any, phone: string): Promise<LinkedUser | null> {
   const { data } = await admin
@@ -74,10 +67,29 @@ async function getLinkedUser(admin: any, phone: string): Promise<LinkedUser | nu
     .eq("phone_number", phone)
     .maybeSingle();
   if (!data || !data.is_active) return null;
+  const userId = data.user_id as string;
+  const orgId = data.organization_id as string;
+
+  const { data: meta } = await admin
+    .from("users_meta")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("organization_id", orgId)
+    .maybeSingle();
+  const role = (meta?.role as "owner" | "admin" | "member" | null) || "member";
+
+  const [allowed, ccs] = await Promise.all([
+    getAllowedCostCenterIds(admin, userId, orgId),
+    listUserCostCenters(admin, userId, orgId),
+  ]);
+
   return {
-    user_id: data.user_id,
-    organization_id: data.organization_id,
-    user_name: data.user_name,
+    user_id: userId,
+    organization_id: orgId,
+    user_name: data.user_name ?? null,
+    role,
+    allowed_cost_center_ids: allowed,
+    cost_centers: ccs,
   };
 }
 
@@ -132,29 +144,41 @@ async function tryLinkByCode(admin: any, phone: string, code: string): Promise<L
   }, { onConflict: "phone_number" });
   await admin.from("farm_whatsapp_link_codes").update({ used: true }).eq("id", row.id);
 
-  return { user_id: row.user_id, organization_id: row.organization_id, user_name: row.user_name };
+  return await getLinkedUser(admin, phone);
 }
 
 // ---------- formatação ----------
 
 function fmtBRL(v: number | null): string {
-  if (v === null || v === undefined) return "—";
+  if (v === null || v === undefined) return "-";
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 }
 
 // deno-lint-ignore no-explicit-any
-function receiptSummary(e: any): string {
+function receiptSummary(e: any, ccName: string | null, showCC: boolean): string {
   const lines = [
-    `*${e.direction === "income" ? "Receita" : "Despesa"}* — ${fmtBRL(e.total_value)}`,
-    e.vendor ? `Fornecedor: ${e.vendor}` : null,
-    e.category ? `Categoria: ${e.category}` : null,
-    e.transaction_date ? `Data: ${e.transaction_date}` : null,
-    e.payment_method ? `Pagamento: ${e.payment_method}` : null,
-    e.invoice_number ? `Documento: ${e.invoice_number}` : null,
-    e.description ? `Descrição: ${e.description}` : null,
+    "*" + (e.direction === "income" ? "Receita" : "Despesa") + "* - " + fmtBRL(e.total_value),
+    e.vendor ? "Fornecedor: " + e.vendor : null,
+    e.category ? "Categoria: " + e.category : null,
+    e.transaction_date ? "Data: " + e.transaction_date : null,
+    e.payment_method ? "Pagamento: " + e.payment_method : null,
+    e.invoice_number ? "Documento: " + e.invoice_number : null,
+    e.description ? "Descricao: " + e.description : null,
+    showCC && ccName ? "Centro: " + ccName : null,
   ].filter(Boolean);
-  const conf = typeof e.confidence === "number" ? ` _(confiança ${Math.round(e.confidence * 100)}%)_` : "";
-  return `📄 *Recibo lido*${conf}\n\n${lines.join("\n")}\n\nConfirma o lançamento?`;
+  const conf = typeof e.confidence === "number"
+    ? " _(confianca " + Math.round(e.confidence * 100) + "%)_"
+    : "";
+  return "📄 *Recibo lido*" + conf + "\n\n" + lines.join("\n") + "\n\nConfirma o lancamento?";
+}
+
+function confirmButtons(showChangeCC: boolean) {
+  const buttons: Array<{ id: string; title: string }> = [
+    { id: "rcpt_ok", title: "✅ Confirmar" },
+  ];
+  if (showChangeCC) buttons.push({ id: "rcpt_change_cc", title: "🏷️ Mudar centro" });
+  buttons.push({ id: "rcpt_edit", title: "✏️ Editar no app" });
+  return buttons;
 }
 
 // ---------- mensagem -> ação ----------
@@ -164,10 +188,11 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
   const from: string = msg.from;
   const linked = await getLinkedUser(admin, from);
 
-  // 1) Botões interativos (confirmação de recibo)
+  // 1) Botões / lista interativos
   if (msg.type === "interactive") {
     const i = msg.interactive;
     const actionId = i?.button_reply?.id || i?.list_reply?.id || "";
+
     if (actionId === "rcpt_ok") {
       const pending = await getPending(admin, from);
       if (!pending || pending.kind !== "receipt_confirm") {
@@ -192,6 +217,7 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
         description: e.description ?? null,
         category: e.category ?? null,
         invoice_number: e.invoice_number ?? null,
+        cost_center_id: p.cost_center_id ?? null,
         attachment_key: p.attachment_key ?? null,
         attachment_mime: p.attachment_mime ?? null,
         source: "whatsapp",
@@ -201,17 +227,74 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
       await clearPending(admin, from);
       if (error) {
         console.error("[wa] insert receipt failed:", error);
-        await sendText(from, "❌ Não consegui salvar o lançamento. Tenta de novo ou usa o app.");
+        await sendText(from, "❌ Nao consegui salvar o lancamento. Tenta de novo ou usa o app.");
         return;
       }
-      await sendText(from, `✅ Lançamento salvo!\n${fmtBRL(e.total_value)} — ${e.category || e.doc_type}\n\nVer no app: ${APP_URL}`);
+      const ccTail = p.cost_center_name && (linked?.cost_centers.length ?? 0) > 1
+        ? "\nCentro: " + p.cost_center_name
+        : "";
+      await sendText(
+        from,
+        "✅ Lancamento salvo!\n" + fmtBRL(e.total_value) + " - " +
+          (e.category || e.doc_type) + ccTail + "\n\nVer no app: " + APP_URL,
+      );
       return;
     }
+
     if (actionId === "rcpt_edit") {
       await clearPending(admin, from);
-      await sendText(from, `✏️ Sem problema. Abre o app pra lançar/editar manual: ${APP_URL}`);
+      await sendText(from, "✏️ Sem problema. Abre o app pra lancar/editar manual: " + APP_URL);
       return;
     }
+
+    // Trocar CC do recibo pendente
+    if (actionId === "rcpt_change_cc") {
+      const pending = await getPending(admin, from);
+      if (!pending || pending.kind !== "receipt_confirm" || !linked) {
+        await sendText(from, "⏳ Esse recibo expirou. Manda a foto de novo.");
+        return;
+      }
+      const ccs = linked.cost_centers;
+      if (ccs.length < 2) {
+        await sendText(from, "Voce so tem 1 centro de custo — nao tem o que trocar.");
+        return;
+      }
+      await sendList(from, "Em qual centro lancar?", "Escolher centro", [{
+        rows: ccs.map((c) => ({
+          id: "rcpt_cc:" + c.id,
+          title: c.name,
+          description: c.id === pending.data.cost_center_id ? "(atual)" : undefined,
+        })),
+      }]);
+      return;
+    }
+
+    // Seleção de CC na lista
+    if (actionId.startsWith("rcpt_cc:")) {
+      const newCCId = actionId.slice("rcpt_cc:".length);
+      const pending = await getPending(admin, from);
+      if (!pending || pending.kind !== "receipt_confirm" || !linked) {
+        await sendText(from, "⏳ Esse recibo expirou. Manda a foto de novo.");
+        return;
+      }
+      const cc = linked.cost_centers.find((c) => c.id === newCCId);
+      if (!cc) {
+        await sendText(from, "Esse centro nao ta na sua lista.");
+        return;
+      }
+      await setPending(admin, from, "receipt_confirm", {
+        ...pending.data,
+        cost_center_id: cc.id,
+        cost_center_name: cc.name,
+      });
+      await sendButtons(
+        from,
+        receiptSummary(pending.data.extracted, cc.name, true),
+        confirmButtons(true),
+      );
+      return;
+    }
+
     return;
   }
 
@@ -220,83 +303,93 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
     const text: string = (msg.text?.body || "").trim();
     const lower = text.toLowerCase();
 
-    if (["menu", "ajuda", "/menu", "oi", "olá", "ola"].includes(lower)) {
+    if (["menu", "ajuda", "/menu", "oi", "ola"].includes(lower)) {
       await sendText(
         from,
         linked
-          ? "👋 Sou o assistente financeiro da *Cropware Farm*.\n\n• Manda uma *foto* ou *PDF* de recibo/nota/boleto que eu leio e lanço.\n• Ou me fala por texto: _\"paguei 850 de diesel\"_, _\"quanto tenho a pagar?\"_, _\"meus últimos lançamentos\"_."
-          : "👋 Olá! Pra usar o assistente da *Cropware Farm*, primeiro vincule sua conta.\n\nNo app: *Configurações → Integrações → WhatsApp*, gere um código de 6 dígitos e me envie aqui.",
+          ? "👋 Sou o assistente financeiro da *Cropware Farm*.\n\n- Manda uma *foto* ou *PDF* de recibo/nota/boleto que eu leio e lanco.\n- Ou me fala por texto: paguei 850 de diesel / quanto tenho a pagar / meus ultimos lancamentos."
+          : "👋 Ola! Pra usar o assistente da *Cropware Farm*, primeiro vincule sua conta.\n\nNo app: *Conta -> WhatsApp*, gere um codigo de 6 digitos e me envie aqui.",
       );
       return;
     }
 
-    // Código de vínculo (6 dígitos)
     if (/^\d{6}$/.test(text)) {
       if (linked) {
-        await sendText(from, "✅ Seu WhatsApp já está vinculado. Manda uma foto de recibo pra começar.");
+        await sendText(from, "✅ Seu WhatsApp ja esta vinculado. Manda uma foto de recibo pra comecar.");
         return;
       }
       const newLink = await tryLinkByCode(admin, from, text);
       if (newLink) {
-        await sendText(from, `✅ *Conta vinculada!*${newLink.user_name ? ` Olá, ${newLink.user_name}.` : ""}\n\nAgora é só mandar foto/PDF de recibos que eu lanço pra você.`);
+        await sendText(
+          from,
+          "✅ *Conta vinculada!*" + (newLink.user_name ? " Ola, " + newLink.user_name + "." : "") +
+            "\n\nAgora e so mandar foto/PDF de recibos que eu lanco pra voce.",
+        );
       } else {
-        await sendText(from, "❌ Código inválido ou expirado. Gere um novo no app: *Configurações → Integrações → WhatsApp*.");
+        await sendText(from, "❌ Codigo invalido ou expirado. Gere um novo no app: *Conta -> WhatsApp*.");
       }
       return;
     }
 
     if (!linked) {
-      await sendText(from, "🔒 Pra eu te ajudar, vincule sua conta primeiro: gere um código de 6 dígitos no app (*Configurações → Integrações → WhatsApp*) e me envie aqui.");
+      await sendText(
+        from,
+        "🔒 Pra eu te ajudar, vincule sua conta primeiro: gere um codigo de 6 digitos no app (*Conta -> WhatsApp*) e me envie aqui.",
+      );
       return;
     }
 
-    // Texto livre de usuário vinculado → IA financeira (Fase B, Gemini function calling)
     const reply = await runFarmAi(admin, linked, text);
     await sendText(from, reply);
     return;
   }
 
-  // 3) Imagem / documento -> OCR de recibo
+  // 3) Imagem / documento -> OCR + CC
   if (msg.type === "image" || msg.type === "document") {
     if (!linked) {
-      await sendText(from, "📸 Recebi seu arquivo, mas preciso que vincule sua conta primeiro. Gere um código de 6 dígitos no app e me envie.");
+      await sendText(
+        from,
+        "📸 Recebi seu arquivo, mas preciso que vincule sua conta primeiro. Gere um codigo de 6 digitos no app e me envie.",
+      );
       return;
     }
-
     const media = msg.type === "image" ? msg.image : msg.document;
     const mime: string = media?.mime_type || "image/jpeg";
     if (!OCR_MIMES.has(mime)) {
-      await sendText(from, `📎 Recebi o arquivo, mas só consigo ler imagem ou PDF (recebi ${mime}).`);
+      await sendText(from, "📎 Recebi o arquivo, mas so consigo ler imagem ou PDF (recebi " + mime + ").");
+      return;
+    }
+    if (linked.cost_centers.length === 0) {
+      await sendText(from, "Voce ainda nao tem nenhum centro de custo liberado. Pede pro admin antes de mandar recibo.");
       return;
     }
 
     await sendText(from, "📄 Lendo o documento...");
-
     let buf: ArrayBuffer;
     try {
       buf = await downloadMedia(media.id);
     } catch (e) {
       console.error("[wa] download failed:", e);
-      await sendText(from, "⚠️ Não consegui baixar o arquivo. Reenvia em alguns segundos.");
+      await sendText(from, "⚠️ Nao consegui baixar o arquivo. Reenvia em alguns segundos.");
       return;
     }
     if (buf.byteLength > 10 * 1024 * 1024) {
-      await sendText(from, "📄 Arquivo acima de 10MB. Manda uma foto mais leve ou páginas separadas.");
+      await sendText(from, "📄 Arquivo acima de 10MB. Manda uma foto mais leve ou paginas separadas.");
       return;
     }
-
     const base64 = bytesToBase64(buf);
     const ocr = await extractReceiptFromImage(base64, mime);
     if (!ocr.ok) {
       console.error("[wa] ocr failed:", ocr.error);
-      await sendText(from, "🤔 Li o arquivo mas não consegui extrair os dados. Tenta uma foto mais nítida, ou lança manual no app.");
+      await sendText(from, "🤔 Li o arquivo mas nao consegui extrair os dados. Tenta uma foto mais nitida, ou lanca manual no app.");
       return;
     }
 
-    // OCR ok -> guarda o doc no R2 e abre a confirmação no chat
+    // CC default do user pra esse recibo. Se >1 CC, oferece "Mudar centro".
+    const defaultCC = linked.cost_centers.find((c) => c.is_default) || linked.cost_centers[0];
     const yyyymm = new Date().toISOString().slice(0, 7);
     const ext = mime === "application/pdf" ? "pdf" : (mime.split("/")[1] || "jpg");
-    const key = `org-${linked.organization_id}/${yyyymm}/${crypto.randomUUID()}.${ext}`;
+    const key = "org-" + linked.organization_id + "/" + yyyymm + "/" + crypto.randomUUID() + "." + ext;
     try {
       await uploadToR2(key, buf, mime);
     } catch (e) {
@@ -311,21 +404,23 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
       attachment_mime: mime,
       user_id: linked.user_id,
       organization_id: linked.organization_id,
+      cost_center_id: defaultCC.id,
+      cost_center_name: defaultCC.name,
     });
 
-    await sendButtons(from, receiptSummary(ocr.data), [
-      { id: "rcpt_ok", title: "✅ Confirmar" },
-      { id: "rcpt_edit", title: "✏️ Editar no app" },
-    ]);
+    const showCC = linked.cost_centers.length > 1;
+    await sendButtons(
+      from,
+      receiptSummary(ocr.data, defaultCC.name, showCC),
+      confirmButtons(showCC),
+    );
     return;
   }
 
-  // 4) Outros tipos (áudio, localização, etc.) — fora do escopo da Fase A
-  await sendText(from, "🙂 Por enquanto eu processo *fotos e PDFs* de recibos. Áudio e conversa livre chegam nas próximas fases.");
+  await sendText(from, "🙂 Por enquanto eu processo *fotos e PDFs* de recibos, e converso por texto sobre suas financas.");
 }
 
 export function mountWhatsappRoutes(app: Hono) {
-  // Verificação do webhook (Meta challenge GET)
   app.get("/webhook/whatsapp", (c) => {
     const mode = c.req.query("hub.mode");
     const token = c.req.query("hub.verify_token");
@@ -337,20 +432,15 @@ export function mountWhatsappRoutes(app: Hono) {
     return c.json({ error: "forbidden" }, 403);
   });
 
-  // App web (autenticado) gera código de 6 dígitos pra vincular WhatsApp
   app.post("/integrations/generate-code", async (c) => {
     try {
       const client = getUserClient(c.req.raw);
       const auth = await requireFarmUser(client);
       if (auth.error) return auth.error;
-
       const { data: meta } = await client
         .from("users_meta").select("full_name").eq("user_id", auth.user!.id).maybeSingle();
-
-      // limpa códigos antigos não usados desse user
       await client.from("farm_whatsapp_link_codes")
         .delete().eq("user_id", auth.user!.id).eq("used", false);
-
       const code = String(Math.floor(100000 + Math.random() * 900000));
       const expiresAt = new Date(Date.now() + 10 * 60_000).toISOString();
       const { error } = await client.from("farm_whatsapp_link_codes").insert({
@@ -368,19 +458,14 @@ export function mountWhatsappRoutes(app: Hono) {
     }
   });
 
-  // Webhook principal (mensagens recebidas)
   app.post("/webhook/whatsapp", async (c) => {
     const body = await c.req.json().catch(() => null);
     if (!body?.entry) return c.json({ ok: true });
-
-    // PNID filter — só o número do Farm
     const myPnid = Deno.env.get("WHATSAPP_FARM_BOT_PNID");
     const incomingPnid = body.entry?.[0]?.changes?.[0]?.value?.metadata?.phone_number_id;
     if (myPnid && incomingPnid && incomingPnid !== myPnid) {
       return c.json({ ok: true, ignored: true, reason: "foreign_pnid" });
     }
-
-    // Coleta + dedup das mensagens
     // deno-lint-ignore no-explicit-any
     const messages: any[] = [];
     for (const entry of body.entry) {
@@ -393,7 +478,6 @@ export function mountWhatsappRoutes(app: Hono) {
       }
     }
     if (messages.length === 0) return c.json({ ok: true });
-
     const admin = getSupabaseAdmin();
     const work = (async () => {
       for (const m of messages) {
@@ -407,15 +491,11 @@ export function mountWhatsappRoutes(app: Hono) {
         }
       }
     })();
-
     const maybe = runBackground(work);
     if (maybe) await maybe;
     return c.json({ ok: true });
   });
 
-  // Webhook da Salvy — captura o SMS de verificação da Meta (número virtual não
-  // tem SIM, SMS só chega aqui). Guarda o último pra leitura durante o registro.
-  // TODO produção: verificar assinatura svix-signature com SALVY_WEBHOOK_SECRET.
   app.post("/webhook/salvy-sms", async (c) => {
     const body = await c.req.json().catch(() => null);
     if (!body) return c.json({ error: "invalid" }, 400);

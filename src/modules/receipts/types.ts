@@ -64,6 +64,7 @@ export interface ReceiptFilters {
   status?: ReceiptStatus;
   category?: string;
   direction?: ReceiptDirection;
+  cost_center_id?: string;
   search?: string;
   from?: string;
   to?: string;

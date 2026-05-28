@@ -27,6 +27,15 @@ const FarmsPage = lazyWithRetry(
 const AccountPage = lazyWithRetry(
   () => import("@/modules/account/pages/AccountPage"),
 );
+const CostCentersPage = lazyWithRetry(
+  () => import("@/modules/cost-centers/pages/CostCentersPage"),
+);
+const TeamPage = lazyWithRetry(
+  () => import("@/modules/team/pages/TeamPage"),
+);
+const JoinPage = lazyWithRetry(
+  () => import("@/modules/team/pages/JoinPage"),
+);
 
 type AuthView = "login" | "signup" | "forgot";
 
@@ -53,10 +62,28 @@ function LoadingScreen() {
 }
 
 function RootRoutes() {
-  const { user, loading, isResettingPassword, resetError } = useAuth();
+  const { user, loading, isResettingPassword, resetError, isAdmin } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (isResettingPassword || resetError) return <ResetPasswordScreen />;
+
+  // Rota publica /entrar (acessivel sem login pra signup via convite)
+  const path = window.location.pathname;
+  if (!user && path === "/entrar") {
+    return (
+      <Routes>
+        <Route
+          path="entrar"
+          element={
+            <Suspense fallback={<LoadingScreen />}>
+              <JoinPage />
+            </Suspense>
+          }
+        />
+      </Routes>
+    );
+  }
+
   if (!user) return <AuthFlow />;
 
   return (
@@ -94,6 +121,26 @@ function RootRoutes() {
             </Suspense>
           }
         />
+        {isAdmin && (
+          <>
+            <Route
+              path="centros"
+              element={
+                <Suspense fallback={<LoadingScreen />}>
+                  <CostCentersPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="equipe"
+              element={
+                <Suspense fallback={<LoadingScreen />}>
+                  <TeamPage />
+                </Suspense>
+              }
+            />
+          </>
+        )}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
