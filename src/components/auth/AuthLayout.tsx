@@ -12,7 +12,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
     <main className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <Logo className="text-farm-primary h-7 w-auto" />
+          <Logo className="h-7 w-auto" />
           <p className="text-sm text-slate-500 mt-2">A fazenda no celular.</p>
         </div>
         <div className="bg-white rounded-lg border border-slate-200 p-6 shadow-sm">

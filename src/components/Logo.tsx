@@ -1,10 +1,41 @@
-import type { SVGProps } from "react";
+import type { ImgHTMLAttributes, SVGProps } from "react";
+import { cn } from "@/components/ui/utils";
+
+/**
+ * Wordmark "CROPWARE" + icone C - asset oficial compartilhado com o
+ * Cropware CDM (Field). Servido em `/logo-cropware.svg` (public/).
+ *
+ * Renderiza via `<img>` pra preservar exatamente o glyph e a proporcao
+ * do SVG original (viewBox 0 0 8150.5 1247.02, aspect 6.53:1). O SVG
+ * tem cor nativa #1A1A1A, entao em fundo claro renderiza preto/grafite
+ * naturalmente. Pra fundo escuro (header slate), usar prop `white` que
+ * aplica `filter: brightness(0) invert(1)`.
+ *
+ * Exemplos:
+ *   <Logo className="h-8 w-auto shrink-0" white />     // header
+ *   <Logo className="h-7 w-auto" />                    // AuthLayout
+ */
+export function Logo({
+  className,
+  white = false,
+  alt = "Cropware",
+  ...props
+}: ImgHTMLAttributes<HTMLImageElement> & { white?: boolean }) {
+  return (
+    <img
+      src="/logo-cropware.svg"
+      alt={alt}
+      className={cn("w-auto object-contain", className)}
+      style={white ? { filter: "brightness(0) invert(1)" } : undefined}
+      {...props}
+    />
+  );
+}
 
 /**
  * Apenas o glifo (icone) do Cropware - sem o quadrado de fundo e sem
  * wordmark. fill=currentColor pra tingir via Tailwind text-*.
- * Tratamento monocromatico igual ao CDM (logo branco no header).
- * Extraido de icons-logos/icon-svg.svg (so o path, sem os rects).
+ * Mantido como backup pra usos compactos no futuro (hoje sem call site).
  */
 export function LogoIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -22,48 +53,6 @@ export function LogoIcon(props: SVGProps<SVGSVGElement>) {
             d="M75.544,33.636C75.235,33.457 74.854,33.457 74.544,33.636L39.511,53.863C39.201,54.041 39.011,54.371 39.011,54.729L39.011,95.182C39.011,95.539 39.201,95.869 39.511,96.048L74.544,116.275C74.854,116.454 75.235,116.454 75.544,116.275L110.578,96.048C110.887,95.869 111.078,95.539 111.078,95.182L111.078,75.261L75.044,96.065L56.763,85.51L56.763,64.4L75.044,74.955L111.078,54.151L75.544,33.636Z"
           />
         </g>
-      </g>
-    </svg>
-  );
-}
-
-/**
- * Logo wordmark do Cropware Farm.
- * SVG inline com `fill="currentColor"` - cor controlada via Tailwind
- * `text-*` no elemento pai.
- *
- * viewBox original do arquivo SVG: `250 430 1000 140` (aspect 7.14:1).
- * O path do texto "CROPWARE FARM" vai de y=444 a y=557 (113 alto) - o
- * restante e' padding do quadrado do icone. Pra renderizar com mesmo
- * cap-height visual do CDM `h-8`, cropamos o viewBox em y=442 ate y=558
- * (altura 116, aspect 8.62:1 ~ proximo do CDM 9.6:1). Resultado: as
- * letras preenchem ~97% da altura, e o quadrado do icone vira retangulo
- * 150x126 (glifo C continua centralizado).
- *
- * Exemplo:
- *   <Logo className="text-white h-8" />            // 32px alto (header CDM)
- *   <Logo className="text-farm-primary h-7" />     // 28px alto
- */
-export function Logo(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="250 442 1000 116"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="Cropware Farm"
-      {...props}
-    >
-      <g transform="matrix(2.214214,0,0,2.214214,227.343038,424.035977)">
-        <path
-          fill="currentColor"
-          d="M129.2,9.217L99.011,9.217C96.194,9.217 93.955,11.528 93.955,14.272L93.955,54.79C93.955,57.534 96.194,59.773 99.011,59.773L129.2,59.773C131.944,59.773 134.256,57.534 134.256,54.79L134.256,42.8L117.211,42.8L117.211,52.117L111,52.117L111,16.872L117.211,16.872L117.211,30.306L134.256,30.306L134.256,14.272C134.256,11.528 131.944,9.217 129.2,9.217ZM175.134,9.217L139.889,9.217L139.889,59.773L156.934,59.773L156.934,43.451L163.073,59.773L180.117,59.773L173.401,43.667L175.134,43.667C177.879,43.667 180.19,41.428 180.19,38.612L180.19,14.272C180.19,11.528 177.879,9.217 175.134,9.217ZM163.145,16.872L163.145,36.011L156.934,36.011L156.934,16.872L163.145,16.872ZM220.346,9.217L190.157,9.217C187.339,9.217 185.101,11.528 185.101,14.272L185.101,54.717C185.101,57.534 187.339,59.773 190.157,59.773L220.346,59.773C223.09,59.773 225.401,57.534 225.401,54.717L225.401,14.272C225.401,11.528 223.09,9.217 220.346,9.217ZM208.357,52.117L202.145,52.117L202.145,16.872L208.357,16.872L208.357,52.117ZM266.28,9.217L231.035,9.217L231.035,59.773L248.08,59.773L248.08,44.389L266.28,44.389C269.024,44.389 271.336,42.151 271.336,39.333L271.336,14.272C271.336,11.528 269.024,9.217 266.28,9.217ZM248.08,36.734L248.08,16.872L254.291,16.872L254.291,36.734L248.08,36.734ZM305.353,28.5L309.975,59.773L326.153,59.773L334.964,9.217L317.919,9.217L315.175,36.878L311.13,9.217L299.502,9.217L295.458,36.878L292.713,9.217L275.669,9.217L284.48,59.773L300.658,59.773L305.28,28.5L305.353,28.5ZM339.297,14.272L339.297,59.773L356.342,59.773L356.342,36.734L362.264,36.734L362.264,59.773L379.309,59.773L379.309,9.217L344.353,9.217C341.536,9.217 339.297,11.528 339.297,14.272ZM356.342,16.872L362.264,16.872L362.264,29.078L356.342,29.078L356.342,16.872ZM420.332,9.217L385.087,9.217L385.087,59.773L402.132,59.773L402.132,43.451L408.271,59.773L425.315,59.773L418.599,43.667L420.332,43.667C423.077,43.667 425.388,41.428 425.388,38.612L425.388,14.272C425.388,11.528 423.077,9.217 420.332,9.217ZM408.343,16.872L408.343,36.011L402.132,36.011L402.132,16.872L408.343,16.872ZM430.443,9.217L430.443,59.773L461.86,59.773L461.86,52.117L447.488,52.117L447.488,36.734L457.888,36.734L457.888,29.078L447.488,29.078L447.488,16.872L461.86,16.872L461.86,9.217L430.443,9.217Z"
-        />
-      </g>
-      <g transform="matrix(0.927802,0,0,0.927802,250,430.414819)">
-        <path
-          fill="currentColor"
-          d="M150,0L150,150L0,150L0,0L150,0ZM75.598,25.603C75.228,25.389 74.772,25.389 74.402,25.603L32.52,49.784C32.15,49.997 31.922,50.392 31.922,50.819L31.922,99.181C31.922,99.608 32.15,100.003 32.52,100.216L74.402,124.397C74.772,124.611 75.228,124.611 75.598,124.397L117.48,100.216C117.85,100.003 118.078,99.608 118.078,99.181L118.078,75.366L75,100.236L53.145,87.618L53.145,62.381L75,75L118.078,50.129L75.598,25.603Z"
-        />
       </g>
     </svg>
   );
