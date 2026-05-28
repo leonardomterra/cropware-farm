@@ -3,7 +3,7 @@ import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
 import { extractReceiptFromImage, transcribeAudio } from "../lib/gemini.ts";
 import { uploadToR2 } from "../lib/r2.ts";
-import { runFarmAi, type LinkedUser } from "../lib/farmAi.ts";
+import { applyMarkPaid, runFarmAi, type LinkedUser } from "../lib/farmAi.ts";
 import { getAllowedCostCenterIds, listUserCostCenters } from "../lib/cc.ts";
 import {
   bytesToBase64,
@@ -339,7 +339,40 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
       return;
     }
 
-    const reply = await runFarmAi(admin, linked, text);
+    // Desambiguacao de mark_receipt_paid: user respondeu "1", "2", etc apos
+    // o bot listar varias contas pendentes (pending kind='pay_select').
+    const numericMatch = /^[1-9]\d?$/.test(text) ? Number(text) : null;
+    if (numericMatch !== null) {
+      const pending = await getPending(admin, from);
+      if (pending?.kind === "pay_select") {
+        const ids: string[] = Array.isArray(pending.data?.ids) ? pending.data.ids : [];
+        const idx = numericMatch - 1;
+        if (idx < 0 || idx >= ids.length) {
+          await sendText(from, "Numero fora do intervalo. Manda outro, ou 'cancelar'.");
+          return;
+        }
+        const receiptId = ids[idx];
+        const { data: row } = await admin
+          .from("farm_receipts")
+          .select("id, direction, vendor, description, category, total_value, status")
+          .eq("id", receiptId)
+          .maybeSingle();
+        await clearPending(admin, from);
+        if (!row) {
+          await sendText(from, "Essa conta sumiu — talvez tenha sido apagada. Tenta de novo.");
+          return;
+        }
+        if (row.status === "pago" || row.status === "recebido") {
+          await sendText(from, "Essa conta ja estava como " + row.status + ". 😉");
+          return;
+        }
+        const reply = await applyMarkPaid(admin, row);
+        await sendText(from, reply);
+        return;
+      }
+    }
+
+    const reply = await runFarmAi(admin, linked, text, from);
     await sendText(from, reply);
     return;
   }
@@ -452,7 +485,7 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
       return;
     }
     await sendText(from, "🎙️ Entendi: _" + tr.transcript + "_");
-    const reply = await runFarmAi(admin, linked, tr.transcript);
+    const reply = await runFarmAi(admin, linked, tr.transcript, from);
     await sendText(from, reply);
     return;
   }

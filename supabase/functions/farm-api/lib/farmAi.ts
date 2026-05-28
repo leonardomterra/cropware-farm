@@ -31,9 +31,13 @@ const SYSTEM_PROMPT_BASE =
   "Voce e o assistente financeiro da *Cropware Farm*, falando com um produtor rural brasileiro pelo WhatsApp. Tom pratico, direto, PT-BR, poucas palavras. Use emojis com moderacao.\n\n" +
   "Voce ajuda a registrar e consultar lancamentos financeiros (despesas e receitas). Use SEMPRE as ferramentas disponiveis - nunca invente valores nem confirme registro sem chamar a funcao.\n\n" +
   "REGRAS:\n" +
-  "- paguei/comprei/gastei X = despesa (expense). recebi/vendi X = receita (income).\n" +
+  "- 'paguei/comprei/gastei <valor> de <categoria>' COM valor monetario = NOVA despesa, use create_receipt.\n" +
+  "- 'recebi/vendi <valor> de <categoria>' COM valor monetario = NOVA receita, use create_receipt.\n" +
+  "- 'paguei/quitei/dei baixa <fornecedor/descricao>' SEM valor (ou referindo a conta existente) = marcar conta pendente como paga, use mark_receipt_paid.\n" +
+  "  Ex: 'paguei o boleto da Cemig', 'quitei a conta da agua', 'paguei aquele do diesel' -> mark_receipt_paid.\n" +
+  "- 'recebi <quem/descricao>' SEM valor = marcar receita pendente como recebida, use mark_receipt_paid (a tool cobre ambos).\n" +
   "- Valores em reais (number). Se o usuario falar '1,2 mil' entenda 1200.\n" +
-  "- Se faltar o VALOR, pergunte so o valor. Nao invente.\n" +
+  "- Se faltar o VALOR numa criacao, pergunte so o valor. Nao invente.\n" +
   "- Categorias de despesa: combustivel, defensivos, sementes, fertilizantes, manutencao, pecas, frete, servicos, alimentacao, arrendamento, folha, outros_despesa. Receita: venda_graos, venda_gado, outros_receita.\n" +
   "- Para consultas (quanto gastei, o que tenho a pagar, resumo, quanto devo) use get_financial_summary ou list_receipts.\n" +
   "- EDICAO e EXCLUSAO de lancamentos NAO sao possiveis pelo WhatsApp - oriente a usar o app web.\n" +
@@ -106,6 +110,29 @@ function toolDeclarations() {
         name: "list_my_cost_centers",
         description: "Lista os centros de custo a que o usuario tem acesso.",
         parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "mark_receipt_paid",
+        description:
+          "Marca uma conta pendente como paga (despesa) ou recebida (receita). " +
+          "Use quando o usuario fala 'paguei/quitei/dei baixa em <X>' OU 'recebi <X>' " +
+          "referindo-se a uma conta JA EXISTENTE, sem informar valor novo.",
+        parameters: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description:
+                "Texto que descreve a conta: fornecedor, categoria ou descricao. Ex: 'Cemig', 'boleto da agua', 'diesel'.",
+            },
+            amount: {
+              type: "number",
+              description:
+                "Valor aproximado, se o usuario citar. Usado pra desambiguar quando houver multiplas contas do mesmo fornecedor.",
+            },
+          },
+          required: ["query"],
+        },
       },
     ],
   }];
@@ -235,6 +262,106 @@ async function execListReceipts(admin: any, linked: LinkedUser, args: any): Prom
   return "📋 *Ultimos lancamentos*\n\n" + lines.join("\n");
 }
 
+/**
+ * Tenta marcar uma conta pendente como paga/recebida.
+ *
+ * 0 matches  -> texto explicando que nao achou (sugere criar nova).
+ * 1 match    -> marca como pago/recebido na hora.
+ * >1 matches -> escreve farm_wa_pending kind='pay_select' com array de ids,
+ *               retorna lista numerada pro user responder "1", "2", etc.
+ *               A logica de "user respondeu numero" fica em handlers/whatsapp.ts
+ *               (precisa de from + interrompe o flow antes de runFarmAi).
+ */
+// deno-lint-ignore no-explicit-any
+async function execMarkPaid(
+  admin: any,
+  linked: LinkedUser,
+  // deno-lint-ignore no-explicit-any
+  args: any,
+  from: string,
+): Promise<string> {
+  const query = String(args.query || "").trim();
+  if (!query) return "Pra qual conta? Me diz o fornecedor ou descricao. Ex: 'paguei o boleto da Cemig'.";
+
+  // Busca todas as pendentes do escopo CCs do user.
+  let q = admin
+    .from("farm_receipts")
+    .select("id, direction, vendor, description, category, total_value, transaction_date, due_date, status, cost_center_id")
+    .eq("organization_id", linked.organization_id)
+    .in("status", ["a_pagar", "a_receber", "vencido"])
+    .order("due_date", { ascending: true, nullsFirst: false })
+    .order("transaction_date", { ascending: false })
+    .limit(50);
+  const allowed = ccFilterIds(linked);
+  if (allowed) q = q.in("cost_center_id", allowed);
+  const { data, error } = await q;
+  if (error) {
+    console.error("[farmAi] mark_paid query error:", error);
+    return "Nao consegui buscar suas contas pendentes agora.";
+  }
+  if (!data || data.length === 0) return "Voce nao tem nenhuma conta pendente. 🤷";
+
+  // Fuzzy match: vendor / description / category ilike.
+  const needle = query.toLowerCase();
+  // deno-lint-ignore no-explicit-any
+  let matches = (data as any[]).filter((r) =>
+    (r.vendor || "").toLowerCase().includes(needle)
+    || (r.description || "").toLowerCase().includes(needle)
+    || (r.category || "").toLowerCase().includes(needle)
+  );
+
+  // Se amount foi citado, filtra por +/-5%.
+  const amount = Number(args.amount);
+  if (Number.isFinite(amount) && amount > 0 && matches.length > 1) {
+    const tol = amount * 0.05;
+    const tight = matches.filter((r) => Math.abs(Number(r.total_value) - amount) <= tol);
+    if (tight.length > 0) matches = tight;
+  }
+
+  if (matches.length === 0) {
+    return `Nao achei conta pendente com '${query}'. Manda 'a pagar' pra eu listar tudo que esta em aberto.`;
+  }
+
+  if (matches.length === 1) {
+    return await applyMarkPaid(admin, matches[0]);
+  }
+
+  // Multiplas: lista + pending.
+  const top = matches.slice(0, 9);
+  const ids = top.map((r) => r.id as string);
+  await admin.from("farm_wa_pending").upsert({
+    phone_number: from,
+    kind: "pay_select",
+    data: { ids },
+    expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+  });
+  const lines = top.map((r, i) => {
+    const d = r.due_date || r.transaction_date || "--";
+    const ds = typeof d === "string" ? d.split("-").reverse().slice(0, 2).join("/") : "--";
+    const arrow = r.direction === "income" ? "💰" : "💸";
+    const vendor = r.vendor || r.description || r.category || "(sem fornecedor)";
+    return `*${i + 1}*. ${arrow} ${ds} - ${fmtBRL(Number(r.total_value))} - ${vendor}`;
+  });
+  return "Achei mais de uma conta. Responde com o numero da que voce pagou:\n\n" + lines.join("\n");
+}
+
+// deno-lint-ignore no-explicit-any
+export async function applyMarkPaid(admin: any, row: any): Promise<string> {
+  const newStatus = row.direction === "income" ? "recebido" : "pago";
+  const today = todayBR();
+  const { error: updErr } = await admin
+    .from("farm_receipts")
+    .update({ status: newStatus, paid_date: today })
+    .eq("id", row.id);
+  if (updErr) {
+    console.error("[farmAi] mark_paid update error:", updErr);
+    return "Nao consegui atualizar a conta. Tenta de novo em instantes.";
+  }
+  const verb = row.direction === "income" ? "Recebido" : "Pago";
+  const who = row.vendor || row.description || row.category || "lancamento";
+  return `✅ ${verb}: ${fmtBRL(Number(row.total_value))} - ${who}.`;
+}
+
 function execListMyCostCenters(linked: LinkedUser): string {
   if (linked.cost_centers.length === 0) {
     return "Voce ainda nao tem nenhum centro de custo liberado. Pede pro admin.";
@@ -252,7 +379,7 @@ interface GeminiPart {
 }
 
 // deno-lint-ignore no-explicit-any
-export async function runFarmAi(admin: any, linked: LinkedUser, userText: string): Promise<string> {
+export async function runFarmAi(admin: any, linked: LinkedUser, userText: string, from: string): Promise<string> {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   if (!supabaseUrl || !anonKey) return "IA nao configurada no momento.";
@@ -303,6 +430,7 @@ export async function runFarmAi(admin: any, linked: LinkedUser, userText: string
       else if (name === "get_financial_summary") reply = await execSummary(admin, linked);
       else if (name === "list_receipts") reply = await execListReceipts(admin, linked, args);
       else if (name === "list_my_cost_centers") reply = execListMyCostCenters(linked);
+      else if (name === "mark_receipt_paid") reply = await execMarkPaid(admin, linked, args, from);
       else reply = "Nao entendi bem. Pode reformular?";
     } else {
       const text = parts.map((p) => p.text).filter(Boolean).join("\n").trim();
