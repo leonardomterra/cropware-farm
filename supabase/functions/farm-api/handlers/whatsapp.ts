@@ -3,7 +3,7 @@ import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
 import { extractReceiptFromImage, transcribeAudio } from "../lib/gemini.ts";
 import { uploadToR2 } from "../lib/r2.ts";
-import { applyMarkPaid, runFarmAi, type LinkedUser } from "../lib/farmAi.ts";
+import { applyCreateReceipt, applyMarkPaid, runFarmAi, type LinkedUser } from "../lib/farmAi.ts";
 import { getAllowedCostCenterIds, listUserCostCenters } from "../lib/cc.ts";
 import {
   bytesToBase64,
@@ -247,6 +247,25 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
       return;
     }
 
+    // Seleção de CC vinda do execCreateReceipt (texto/audio com >1 CCs)
+    if (actionId.startsWith("cr_cc:")) {
+      const ccId = actionId.slice("cr_cc:".length);
+      const pending = await getPending(admin, from);
+      if (!pending || pending.kind !== "create_select_cc" || !linked) {
+        await sendText(from, "⏳ Esse pedido expirou. Manda de novo.");
+        return;
+      }
+      const cc = linked.cost_centers.find((c) => c.id === ccId);
+      if (!cc) {
+        await sendText(from, "Esse centro nao ta na sua lista.");
+        return;
+      }
+      await clearPending(admin, from);
+      const reply = await applyCreateReceipt(admin, linked, pending.data.args, cc);
+      await sendText(from, reply);
+      return;
+    }
+
     // Trocar CC do recibo pendente
     if (actionId === "rcpt_change_cc") {
       const pending = await getPending(admin, from);
@@ -373,7 +392,7 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
     }
 
     const reply = await runFarmAi(admin, linked, text, from);
-    await sendText(from, reply);
+    if (reply) await sendText(from, reply); // "" = execCreate ja despachou botoes
     return;
   }
 
@@ -486,7 +505,7 @@ async function handleMessage(admin: any, msg: any): Promise<void> {
     }
     await sendText(from, "🎙️ Entendi: _" + tr.transcript + "_");
     const reply = await runFarmAi(admin, linked, tr.transcript, from);
-    await sendText(from, reply);
+    if (reply) await sendText(from, reply);
     return;
   }
 

@@ -1,4 +1,5 @@
 import { type CostCenterRow } from "./cc.ts";
+import { sendButtons, sendList } from "./whatsapp.ts";
 
 const MODEL = "gemini-3.5-flash";
 const HISTORY_MAX = 12;
@@ -52,16 +53,12 @@ function buildSystemPrompt(linked: LinkedUser): string {
       ? `\n\nCentro de custo unico do usuario: ${only.name} (slug: ${only.slug}). Todo lancamento vai pra ele automaticamente — NAO pergunte qual centro.`
       : "\n\nO usuario nao tem nenhum centro de custo liberado. Nao registre nada e oriente a falar com o admin.";
   } else {
-    const def = ccs.find((c) => c.is_default) || ccs[0];
-    const lines = ccs.map((c) =>
-      `- ${c.slug} (${c.name})${c.id === def.id ? " [default]" : ""}`
-    ).join("\n");
+    const lines = ccs.map((c) => `- ${c.slug} (${c.name})`).join("\n");
     ccBlock =
       `\n\nCentros de custo disponiveis pra este usuario:\n${lines}\n\n` +
-      `Ao registrar um lancamento:\n` +
-      `- Se o usuario NAO disser o centro, use o default ('${def.slug}') SEM perguntar.\n` +
-      `- Se mencionar nome/slug ('no escritorio', 'fazenda'), use esse.\n` +
-      `- Use o argumento 'cost_center' (slug ou nome) ao chamar create_receipt.`;
+      `Ao chamar create_receipt:\n` +
+      `- Se o usuario mencionar nome/slug do centro ('no escritorio', 'fazenda', 'pessoal'), passe esse slug no argumento 'cost_center'.\n` +
+      `- Se o usuario NAO mencionar centro, NAO preencha 'cost_center'. O backend vai perguntar via botoes. NAO pergunte voce.`;
   }
   return SYSTEM_PROMPT_BASE + ccBlock + `\n\nHoje e ${todayBR()}.`;
 }
@@ -155,19 +152,16 @@ function ccFilterIds(linked: LinkedUser): string[] | null {
   return linked.allowed_cost_center_ids === "all" ? null : linked.allowed_cost_center_ids;
 }
 
+/**
+ * Cria o farm_receipts dado args ja resolvidos + cc.id explicito.
+ * Reuso pelo handler interativo (cr_cc:<id>) apos seleção de CC.
+ */
 // deno-lint-ignore no-explicit-any
-async function execCreateReceipt(admin: any, linked: LinkedUser, args: any): Promise<string> {
+export async function applyCreateReceipt(admin: any, linked: LinkedUser, args: any, cc: CostCenterRow): Promise<string> {
   const total = Number(args.total_value);
-  if (!Number.isFinite(total)) return "Nao entendi o valor. Pode repetir? Ex: paguei 850 de diesel.";
+  if (!Number.isFinite(total)) return "Valor invalido.";
   const direction = args.direction === "income" ? "income" : "expense";
   const category = args.category || (direction === "income" ? "outros_receita" : "outros_despesa");
-
-  let cc = resolveCCFromList(args.cost_center, linked.cost_centers);
-  if (args.cost_center && !cc) {
-    return `Nao achei o centro '${args.cost_center}'. Seus centros: ${linked.cost_centers.map((c) => c.name).join(", ")}.`;
-  }
-  if (!cc) cc = defaultCC(linked);
-  if (!cc) return "Voce ainda nao tem nenhum centro de custo. Pede pro admin liberar um pra voce.";
 
   const { error } = await admin.from("farm_receipts").insert({
     organization_id: linked.organization_id,
@@ -186,7 +180,7 @@ async function execCreateReceipt(admin: any, linked: LinkedUser, args: any): Pro
     source: "whatsapp",
   });
   if (error) {
-    console.error("[farmAi] create_receipt insert error:", error);
+    console.error("[farmAi] applyCreate insert error:", error);
     return "Nao consegui salvar o lancamento. Tenta de novo em instantes.";
   }
   const verb = direction === "income" ? "Receita" : "Despesa";
@@ -194,6 +188,53 @@ async function execCreateReceipt(admin: any, linked: LinkedUser, args: any): Pro
   return "✅ " + verb + " registrada: " + fmtBRL(total) +
     (args.vendor ? " - " + args.vendor : "") +
     " (" + category + ")" + showCC + ".";
+}
+
+// deno-lint-ignore no-explicit-any
+async function execCreateReceipt(admin: any, linked: LinkedUser, args: any, from: string): Promise<string> {
+  const total = Number(args.total_value);
+  if (!Number.isFinite(total)) return "Nao entendi o valor. Pode repetir? Ex: paguei 850 de diesel.";
+
+  // CC mencionado explicitamente: resolve direto.
+  if (args.cost_center) {
+    const cc = resolveCCFromList(args.cost_center, linked.cost_centers);
+    if (!cc) return `Nao achei o centro '${args.cost_center}'. Seus centros: ${linked.cost_centers.map((c) => c.name).join(", ")}.`;
+    return await applyCreateReceipt(admin, linked, args, cc);
+  }
+
+  // So 1 CC permitido: usa direto sem perguntar (nao ha ambiguidade).
+  if (linked.cost_centers.length === 1) {
+    return await applyCreateReceipt(admin, linked, args, linked.cost_centers[0]);
+  }
+  if (linked.cost_centers.length === 0) {
+    return "Voce ainda nao tem nenhum centro de custo. Pede pro admin liberar um pra voce.";
+  }
+
+  // >1 CCs e user nao mencionou: pergunta via botoes/lista. Persiste args.
+  await admin.from("farm_wa_pending").upsert({
+    phone_number: from,
+    kind: "create_select_cc",
+    data: { args },
+    expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+  });
+
+  const direction = args.direction === "income" ? "Receita" : "Despesa";
+  const cat = args.category ? ` (${args.category})` : "";
+  const vend = args.vendor ? ` - ${args.vendor}` : "";
+  const body = `${direction} de ${fmtBRL(total)}${vend}${cat}.\n\nEm qual centro lançar?`;
+
+  if (linked.cost_centers.length <= 3) {
+    await sendButtons(
+      from,
+      body,
+      linked.cost_centers.map((c) => ({ id: "cr_cc:" + c.id, title: c.name })),
+    );
+  } else {
+    await sendList(from, body, "Escolher centro", [{
+      rows: linked.cost_centers.map((c) => ({ id: "cr_cc:" + c.id, title: c.name })),
+    }]);
+  }
+  return ""; // sinal pro handler nao enviar sendText
 }
 
 // deno-lint-ignore no-explicit-any
@@ -426,7 +467,7 @@ export async function runFarmAi(admin: any, linked: LinkedUser, userText: string
     if (fnPart?.functionCall) {
       const { name, args } = fnPart.functionCall;
       console.log("[farmAi] tool=" + name, JSON.stringify(args));
-      if (name === "create_receipt") reply = await execCreateReceipt(admin, linked, args);
+      if (name === "create_receipt") reply = await execCreateReceipt(admin, linked, args, from);
       else if (name === "get_financial_summary") reply = await execSummary(admin, linked);
       else if (name === "list_receipts") reply = await execListReceipts(admin, linked, args);
       else if (name === "list_my_cost_centers") reply = execListMyCostCenters(linked);
