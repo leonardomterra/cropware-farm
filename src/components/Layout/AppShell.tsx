@@ -28,6 +28,7 @@ const BASE_NAV_ITEMS: NavItem[] = [
 
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/centros", label: "Centros" },
+  { to: "/recorrencias", label: "Recorrencias" },
   { to: "/equipe", label: "Equipe" },
 ];
 
@@ -164,29 +165,33 @@ export function AppShell() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              <p
-                className="text-white font-medium leading-none mr-0.5"
-                style={{ fontSize: "14px" }}
-              >
-                {user?.fullName}
-              </p>
-              {days !== null ? (
-                <span
-                  className="inline-flex items-center gap-1.5 rounded h-8 px-3"
-                  style={{
-                    backgroundColor: "#f59e0b",
-                    color: "#ffffff",
-                    fontWeight: 500,
-                    fontSize: "12px",
-                  }}
+            {/* Lado direito - gap-3 entre grupos (padrao CDM).
+                Sub-container agrupa user name + trial badge. */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
+                <p
+                  className="text-white font-medium leading-none"
+                  style={{ fontSize: "14px" }}
                 >
-                  <Clock className="size-3.5" />
-                  {days <= 0
-                    ? "Trial encerrado"
-                    : `Trial - ${days} ${days === 1 ? "dia" : "dias"}`}
-                </span>
-              ) : null}
+                  {user?.fullName}
+                </p>
+                {days !== null ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded h-8 px-3"
+                    style={{
+                      backgroundColor: "#f59e0b",
+                      color: "#ffffff",
+                      fontWeight: 500,
+                      fontSize: "12px",
+                    }}
+                  >
+                    <Clock className="size-3.5" />
+                    {days <= 0
+                      ? "Trial encerrado"
+                      : `Trial - ${days} ${days === 1 ? "dia" : "dias"}`}
+                  </span>
+                ) : null}
+              </div>
               {/* Ajuda e Configuracoes sem funcao por enquanto */}
               <GlassButton
                 icon={HelpCircle}
