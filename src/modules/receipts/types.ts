@@ -36,6 +36,7 @@ export interface Receipt {
   organization_id: string;
   created_by: string;
   farm_id: string | null;
+  cost_center_id: string | null;
   doc_type: ReceiptDocType;
   direction: ReceiptDirection;
   status: ReceiptStatus;

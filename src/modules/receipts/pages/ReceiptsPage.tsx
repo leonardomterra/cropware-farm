@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Camera, Receipt as ReceiptIcon } from "lucide-react";
+import { Camera, Download, Receipt as ReceiptIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -32,6 +32,7 @@ import type {
 } from "../types";
 import { formatBRL, todayISO } from "../utils/receiptFormatters";
 import { STATUSES_BY_DIRECTION } from "../constants";
+import { downloadCsv, rowsToCsv } from "@/utils/csv";
 
 interface PrefillFromScan {
   values: {
@@ -126,6 +127,37 @@ export default function ReceiptsPage() {
     setFormOpen(true);
   };
 
+  const handleExportCsv = () => {
+    if (receipts.length === 0) return;
+    const ccName = (id: string | null) =>
+      id ? (userCCs.find((c) => c.id === id)?.name || "") : "";
+    const headers = [
+      "data", "tipo", "valor", "categoria", "fornecedor",
+      "documento", "pagamento", "status", "vencimento", "pago em",
+      "centro de custo", "descricao", "observacoes",
+    ];
+    const rows = receipts.map((r) => [
+      r.transaction_date || "",
+      r.direction === "income" ? "receita" : "despesa",
+      Number(r.total_value).toFixed(2).replace(".", ","),
+      r.category || "",
+      r.vendor || "",
+      r.invoice_number || "",
+      r.payment_method || "",
+      r.status,
+      r.due_date || "",
+      r.paid_date || "",
+      ccName(r.cost_center_id),
+      r.description || "",
+      r.notes || "",
+    ]);
+    const csv = rowsToCsv(headers, rows);
+    const today = todayISO();
+    const tag = activeCCId !== "all" ? `_${(userCCs.find((c) => c.id === activeCCId)?.name || "cc").replace(/\s+/g, "-").toLowerCase()}` : "";
+    downloadCsv(`lancamentos${tag}_${today}.csv`, csv);
+    toast.success(`${receipts.length} lançamento(s) exportado(s)`);
+  };
+
   const confirmDelete = async () => {
     if (!pendingDelete) return;
     setDeleting(true);
@@ -152,6 +184,16 @@ export default function ReceiptsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportCsv}
+            disabled={receipts.length === 0}
+            className="gap-1"
+            title="Exportar lançamentos filtrados para CSV (abre no Excel)"
+          >
+            <Download className="size-4" />
+            CSV
+          </Button>
           <Button
             variant="outline"
             onClick={() => setCaptureOpen(true)}
