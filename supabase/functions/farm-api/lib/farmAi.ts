@@ -39,6 +39,15 @@ function fmtBRL(v: number | null | undefined): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 }
 
+/** Formata ISO date pra dd/mm (mesmo ano) ou dd/mm/yy (anos diferentes). */
+export function fmtDateBR(iso: string): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  const curY = todayBR().slice(0, 4);
+  return y === curY ? `${d}/${m}` : `${d}/${m}/${y.slice(2)}`;
+}
+
 const SYSTEM_PROMPT_BASE =
   "Voce e o assistente financeiro da *Cropware Farm*, falando com um produtor rural brasileiro pelo WhatsApp. Tom pratico, direto, PT-BR, poucas palavras. Use emojis com moderacao.\n\n" +
   "Voce ajuda a registrar e consultar lancamentos financeiros (despesas e receitas). Use SEMPRE as ferramentas disponiveis - nunca invente valores nem confirme registro sem chamar a funcao.\n\n" +
@@ -197,9 +206,10 @@ export async function applyCreateReceipt(admin: any, linked: LinkedUser, args: a
   }
   const verb = direction === "income" ? "Receita" : "Despesa";
   const showCC = linked.cost_centers.length > 1 ? ` em ${cc.name}` : "";
+  const dt = fmtDateBR(args.transaction_date || todayBR());
   return "✅ " + verb + " registrada: " + fmtBRL(total) +
     (args.vendor ? " - " + args.vendor : "") +
-    " (" + category + ")" + showCC + ".";
+    " (" + category + ")" + showCC + ", dia " + dt + ".";
 }
 
 /**

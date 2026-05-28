@@ -3,7 +3,7 @@ import { getUserClient, requireFarmUser } from "../lib/userClient.ts";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.ts";
 import { extractReceiptFromImage, transcribeAudio } from "../lib/gemini.ts";
 import { uploadToR2 } from "../lib/r2.ts";
-import { applyCreateReceipt, applyMarkPaid, askDateButtons, parseDateBR, runFarmAi, todayBR, yesterdayBR, type LinkedUser } from "../lib/farmAi.ts";
+import { applyCreateReceipt, applyMarkPaid, askDateButtons, fmtDateBR, parseDateBR, runFarmAi, todayBR, yesterdayBR, type LinkedUser } from "../lib/farmAi.ts";
 import { getAllowedCostCenterIds, listUserCostCenters } from "../lib/cc.ts";
 import {
   bytesToBase64,
@@ -223,8 +223,10 @@ async function savePhotoReceipt(admin: any, p: any, dateOverride: string | null,
   }
   const ccTail = p.cost_center_name && (linked?.cost_centers.length ?? 0) > 1
     ? "\nCentro: " + p.cost_center_name : "";
+  const finalDate = dateOverride ?? e.transaction_date ?? null;
+  const dateTail = finalDate ? "\nData: " + fmtDateBR(finalDate) : "";
   return "✅ Lancamento salvo!\n" + fmtBRL(e.total_value) + " - " +
-    (e.category || e.doc_type) + ccTail + "\n\nVer no app: " + APP_URL;
+    (e.category || e.doc_type) + ccTail + dateTail + "\n\nVer no app: " + APP_URL;
 }
 
 // ---------- mensagem -> ação ----------
