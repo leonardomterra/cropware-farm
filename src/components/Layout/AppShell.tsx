@@ -6,7 +6,6 @@ import {
   WifiOff,
   Building2,
   HelpCircle,
-  Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
@@ -108,12 +107,6 @@ export function AppShell() {
                 onClick={() => {}}
               />
               <GlassButton
-                icon={Settings}
-                label="Configuracoes"
-                iconOnly
-                onClick={() => {}}
-              />
-              <GlassButton
                 icon={LogOut}
                 label="Sair"
                 iconOnly
@@ -164,15 +157,11 @@ export function AppShell() {
               >
                 {user?.fullName}
               </p>
-              {/* Ajuda e Configuracoes sem funcao por enquanto */}
+              {/* Ajuda sem funcao por enquanto. Configuracoes saiu daqui
+                  pro tab "Conta" (espelho do CDM, decisao 2026-05-30). */}
               <GlassButton
                 icon={HelpCircle}
                 label="Ajuda"
-                onClick={() => {}}
-              />
-              <GlassButton
-                icon={Settings}
-                label="Configurações"
                 onClick={() => {}}
               />
               <GlassButton
