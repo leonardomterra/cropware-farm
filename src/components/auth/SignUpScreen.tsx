@@ -90,12 +90,12 @@ export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
         </div>
 
         <div className="flex flex-col gap-1">
-          <Label htmlFor="farmName">Nome da fazenda</Label>
+          <Label htmlFor="farmName">Nome da conta</Label>
           <Input
             id="farmName"
             value={farmName}
             onChange={(e) => setFarmName(e.target.value)}
-            placeholder="Ex: Fazenda Vale do Sol"
+            placeholder="Sua empresa, fazenda ou nome pessoal"
             required
             disabled={submitting}
           />
