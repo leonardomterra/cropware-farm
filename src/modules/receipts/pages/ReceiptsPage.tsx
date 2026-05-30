@@ -176,8 +176,24 @@ export default function ReceiptsPage() {
 
   return (
     <div>
-      {/* Action row - botoes a direita. Sem h1 (breadcrumb ja diz "Lancamentos"). */}
-      <div className="flex justify-end gap-2 mb-3">
+      {/* Filtros logo abaixo do breadcrumb (pedido Leonardo 2026-05-30). */}
+      <div className="mb-3">
+        <ReceiptFiltersBar value={filters} onChange={setFilters} />
+      </div>
+
+      {/* Action row - botoes abaixo dos filtros, alinhados a esquerda. */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button variant="default" onClick={openCreate}>
+          Novo Lançamento
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setCaptureOpen(true)}
+          className="gap-1"
+        >
+          <Camera className="size-4" />
+          Capturar Recibo
+        </Button>
         <Button
           variant="outline"
           onClick={handleExportCsv}
@@ -188,22 +204,6 @@ export default function ReceiptsPage() {
           <Download className="size-4" />
           CSV
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => setCaptureOpen(true)}
-          className="gap-1"
-        >
-          <Camera className="size-4" />
-          Capturar Recibo
-        </Button>
-        <Button variant="default" onClick={openCreate}>
-          Novo Lançamento
-        </Button>
-      </div>
-
-      {/* Filtros logo abaixo do breadcrumb (pedido Leonardo 2026-05-30). */}
-      <div className="mb-3">
-        <ReceiptFiltersBar value={filters} onChange={setFilters} />
       </div>
 
       {/* Tabs de CC (filtro adicional, so aparece com 2+ CCs no acesso do user) */}
