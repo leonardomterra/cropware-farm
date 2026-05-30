@@ -1,7 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "@fontsource-variable/geist";
-import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/inter-tight";
 import "@fontsource/alumni-sans/600.css";
 import "@fontsource/alumni-sans/800.css";
 import "./app.css";

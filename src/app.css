@@ -42,7 +42,7 @@
   --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-ui, "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif);
+  --font-sans: var(--font-ui, "Inter Tight Variable", "Inter Tight", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
 }
 
 /* ==========================================================
@@ -52,7 +52,7 @@
    ========================================================== */
 
 :root {
-  --font-ui: "Geist Variable", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-ui: "Inter Tight Variable", "Inter Tight", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
   --background: 0 0% 100%;
   --foreground: 222 47% 11%;
@@ -88,17 +88,14 @@
 }
 
 /* ==========================================================
-   BASE TYPOGRAPHY - Cropware Farm V1.5 (espelho exato do CDM)
+   BASE TYPOGRAPHY - Cropware Farm (espelho exato do CDM)
    --------------------------------------------------------------
-   * Geist Variable como fonte principal (self-hosted via
-     @fontsource-variable/geist) - mesma do Cropware Field.
-   * 14px default em quase tudo. Excecoes:
-     - 16px em titulos importantes (page h1, KPI value)
-     - 12px em badges (override global mais abaixo)
-   * font-weight 400 (normal) default; 300 (light) pra texto
-     secundario. Medium/semibold so em casos raros de enfase.
-   * font-variation-settings: normal (igual CDM - Geist nao usa
-     eixos custom).
+   * Inter Tight Variable como fonte principal (self-hosted via
+     @fontsource-variable/inter-tight) - mesma do Cropware Field.
+   * 14px default; 16px em titulos (page h1, KPI value);
+     badges com override global mais abaixo.
+   * font-weight 400 default; 300 (light) pra texto secundario.
+   * font-variation-settings: normal (igual CDM).
    * letter-spacing -0.015em + font-optical-sizing auto.
    * Anti-serrilhamento: -webkit-font-smoothing antialiased +
      text-rendering optimizeLegibility.
@@ -121,9 +118,9 @@ body {
   background-color: hsl(var(--background));
   min-height: 100%;
   color: hsl(var(--foreground));
-  font-family: var(--font-ui), "Geist Variable", "Geist", ui-sans-serif,
-    system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji" !important;
+  font-family: var(--font-ui), "Inter Tight Variable", "Inter Tight",
+    ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
   font-style: normal;
   font-weight: 400;
   font-optical-sizing: auto;
@@ -200,14 +197,13 @@ select,
   font-weight: 400 !important;
 }
 
-/* Badges: padronizacao global (padrao CDM). JetBrains Mono 12px
-   UPPERCASE em TODOS os [data-slot="badge"]. !important vence o
-   inline fontSize do componente Badge. */
+/* Badges: padronizacao global (padrao CDM, atualizado 2026-05-28).
+   Sem font-family (herda Inter Tight do body), 12.5px weight 300,
+   letter-spacing -0.01em, text-transform none (NAO uppercase).
+   !important vence inline fontSize/transform de componentes. */
 [data-slot="badge"] {
-  font-family: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
-    monospace !important;
-  font-size: 12px !important;
-  font-weight: 400 !important;
-  letter-spacing: 0.02em !important;
-  text-transform: uppercase !important;
+  font-size: 12.5px !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.01em !important;
+  text-transform: none !important;
 }

@@ -6,7 +6,7 @@ import { cn } from "./utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded border px-2.5 py-0.5 text-[13px] font-light w-fit whitespace-nowrap shrink-0 [&>svg]:size-3.5 gap-1.5 [&>svg]:pointer-events-none transition-all shadow-xs overflow-hidden",
+  "inline-flex items-center justify-center rounded border px-2.5 py-0.5 w-fit whitespace-nowrap shrink-0 [&>svg]:size-3.5 gap-1.5 [&>svg]:pointer-events-none transition-all shadow-xs overflow-hidden",
   {
     variants: {
       variant: {
@@ -56,8 +56,8 @@ const badgeVariants = cva(
 );
 
 const sizeToFontSize: Record<string, string> = {
-  default: "13px",
-  compact: "13px",
+  default: "12px",
+  compact: "12px",
 };
 
 function Badge({
