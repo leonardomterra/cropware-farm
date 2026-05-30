@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/components/ui/utils";
 import { useCategories } from "../hooks/useCategories";
 import type {
   ReceiptDirection,
@@ -43,10 +44,14 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
   const clearAll = () => onChange({});
   const hasAny = Object.values(value).some((v) => v !== undefined && v !== "");
 
+  // Cor de fonte mais sutil em todos os campos - bate com o CDM (texto
+  // do SelectValue + placeholder do Input em cinza medio em vez do
+  // slate-900 default). Aplica via className no Trigger/Input.
+  const fieldText = "text-slate-500";
+
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex flex-wrap items-end gap-2">
-      <div className="flex-1 min-w-[180px] max-w-sm">
-        <label className="block text-sm text-slate-500 mb-1">Busca</label>
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex-1 min-w-[200px] max-w-sm">
         <div className="relative">
           <Search className="size-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <Input
@@ -54,44 +59,42 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
             onChange={(e) =>
               set("search", e.target.value || undefined)
             }
-            placeholder="Fornecedor, descricao..."
-            className="pl-8 h-9 bg-white"
+            placeholder="Buscar por fornecedor ou descrição..."
+            className={cn("pl-8 h-9 bg-white", fieldText)}
           />
         </div>
       </div>
 
-      <div className="min-w-[140px]">
-        <label className="block text-sm text-slate-500 mb-1">Tipo</label>
+      <div className="min-w-[160px]">
         <Select
           value={value.direction ?? "all"}
           onValueChange={(v) =>
             set("direction", v === "all" ? undefined : (v as ReceiptDirection))
           }
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className={cn("h-9 bg-white", fieldText)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all">Todos os tipos</SelectItem>
             <SelectItem value="expense">Despesas</SelectItem>
             <SelectItem value="income">Receitas</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="min-w-[140px]">
-        <label className="block text-sm text-slate-500 mb-1">Status</label>
+      <div className="min-w-[160px]">
         <Select
           value={value.status ?? "all"}
           onValueChange={(v) =>
             set("status", v === "all" ? undefined : (v as ReceiptStatus))
           }
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className={cn("h-9 bg-white", fieldText)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="all">Todos os status</SelectItem>
             {STATUS_OPTIONS.map((s) => (
               <SelectItem key={s} value={s}>
                 {STATUS_LABEL[s]}
@@ -101,19 +104,18 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
         </Select>
       </div>
 
-      <div className="min-w-[160px]">
-        <label className="block text-sm text-slate-500 mb-1">Categoria</label>
+      <div className="min-w-[180px]">
         <Select
           value={value.category ?? "all"}
           onValueChange={(v) =>
             set("category", v === "all" ? undefined : v)
           }
         >
-          <SelectTrigger className="h-9 bg-white">
+          <SelectTrigger className={cn("h-9 bg-white", fieldText)}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas</SelectItem>
+            <SelectItem value="all">Todas as categorias</SelectItem>
             {categories.map((c) => (
               <SelectItem key={c.slug} value={c.slug}>
                 {c.name}
@@ -123,25 +125,21 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
         </Select>
       </div>
 
-      <div>
-        <label className="block text-sm text-slate-500 mb-1">De</label>
-        <Input
-          type="date"
-          value={value.from ?? ""}
-          onChange={(e) => set("from", e.target.value || undefined)}
-          className="h-9 w-[140px] bg-white"
-        />
-      </div>
+      <Input
+        type="date"
+        value={value.from ?? ""}
+        onChange={(e) => set("from", e.target.value || undefined)}
+        className={cn("h-9 w-[150px] bg-white", fieldText)}
+        title="Data inicial"
+      />
 
-      <div>
-        <label className="block text-sm text-slate-500 mb-1">Até</label>
-        <Input
-          type="date"
-          value={value.to ?? ""}
-          onChange={(e) => set("to", e.target.value || undefined)}
-          className="h-9 w-[140px] bg-white"
-        />
-      </div>
+      <Input
+        type="date"
+        value={value.to ?? ""}
+        onChange={(e) => set("to", e.target.value || undefined)}
+        className={cn("h-9 w-[150px] bg-white", fieldText)}
+        title="Data final"
+      />
 
       {hasAny ? (
         <Button
