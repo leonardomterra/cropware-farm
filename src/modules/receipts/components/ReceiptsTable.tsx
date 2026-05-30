@@ -13,7 +13,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/components/ui/utils";
 import type { Receipt } from "../types";
 import { STATUS_COLOR_SCHEME, STATUS_LABEL } from "../constants";
-import { formatBRL, formatDateBR } from "../utils/receiptFormatters";
+import { useCategories } from "../hooks/useCategories";
+import {
+  formatBRL,
+  formatDateBR,
+  getCategoryLabel,
+} from "../utils/receiptFormatters";
 
 interface ReceiptsTableProps {
   receipts: Receipt[];
@@ -42,6 +47,7 @@ export function ReceiptsTable({
   onToggleOne,
   onToggleAll,
 }: ReceiptsTableProps) {
+  const { categories } = useCategories();
   const allSelected = receipts.length > 0 && receipts.every((r) => selectedIds.has(r.id));
 
   return (
@@ -107,8 +113,8 @@ export function ReceiptsTable({
                     </span>
                   ) : null}
                 </TableCell>
-                <TableCell className="py-3 text-sm font-normal text-slate-600 capitalize">
-                  {r.category ?? "—"}
+                <TableCell className="py-3 text-sm font-normal text-slate-600">
+                  {getCategoryLabel(r.category, categories)}
                 </TableCell>
                 <TableCell className="py-3">
                   <Badge colorScheme={STATUS_COLOR_SCHEME[r.status]}>

@@ -14,7 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -144,6 +146,19 @@ export function ReceiptFormDialog({
     () => categories.filter((c) => c.direction === form.direction),
     [categories, form.direction],
   );
+
+  // Agrupa categorias por group_name preservando ordem do array filtrado
+  // (que ja vem ordenado por group_name asc + name asc do supabase).
+  const groupedCategories = useMemo(() => {
+    const groups: { name: string; items: typeof filteredCategories }[] = [];
+    for (const c of filteredCategories) {
+      const g = c.group_name || "Outras";
+      const last = groups[groups.length - 1];
+      if (last && last.name === g) last.items.push(c);
+      else groups.push({ name: g, items: [c] });
+    }
+    return groups;
+  }, [filteredCategories]);
 
   const showDueDate =
     form.status === "a_pagar" ||
@@ -299,10 +314,17 @@ export function ReceiptFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Sem categoria</SelectItem>
-                  {filteredCategories.map((c) => (
-                    <SelectItem key={c.slug} value={c.slug}>
-                      {c.name}
-                    </SelectItem>
+                  {groupedCategories.map((group) => (
+                    <SelectGroup key={group.name}>
+                      <SelectLabel className="text-xs uppercase tracking-wide text-slate-400">
+                        {group.name}
+                      </SelectLabel>
+                      {group.items.map((c) => (
+                        <SelectItem key={c.slug} value={c.slug}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>

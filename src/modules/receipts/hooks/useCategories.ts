@@ -24,8 +24,9 @@ export function useCategories(): UseCategoriesResult {
       const { data, error: e } = await supabase
         .from("farm_categories")
         .select(
-          "id, organization_id, slug, name, color, icon_lucide, direction, is_preset",
+          "id, organization_id, slug, name, color, icon_lucide, direction, is_preset, group_name",
         )
+        .order("group_name", { ascending: true, nullsFirst: false })
         .order("name");
 
       if (!mounted) return;

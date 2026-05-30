@@ -16,7 +16,12 @@ import {
   STATUS_COLOR_SCHEME,
   STATUS_LABEL,
 } from "../constants";
-import { formatBRL, formatDateBR } from "../utils/receiptFormatters";
+import { useCategories } from "../hooks/useCategories";
+import {
+  formatBRL,
+  formatDateBR,
+  getCategoryLabel,
+} from "../utils/receiptFormatters";
 
 interface ReceiptViewDialogProps {
   receipt: Receipt | null;
@@ -47,6 +52,7 @@ export function ReceiptViewDialog({
   onOpenChange,
   onEdit,
 }: ReceiptViewDialogProps) {
+  const { categories } = useCategories();
   if (!receipt) return null;
 
   const directionLabel =
@@ -82,7 +88,7 @@ export function ReceiptViewDialog({
             <Field label="Fornecedor">{receipt.vendor || "—"}</Field>
             <Field label="CNPJ">{receipt.vendor_cnpj || "—"}</Field>
             <Field label="Categoria">
-              <span className="capitalize">{receipt.category || "—"}</span>
+              {getCategoryLabel(receipt.category, categories)}
             </Field>
             <Field label="Descrição">{receipt.description || "—"}</Field>
           </div>

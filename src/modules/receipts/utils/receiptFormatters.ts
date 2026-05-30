@@ -1,3 +1,5 @@
+import type { FarmCategory } from "../types";
+
 export function formatBRL(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "-";
   const n = typeof value === "string" ? Number(value) : value;
@@ -30,6 +32,39 @@ export function todayISO(): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/**
+ * Devolve o label legivel de uma categoria pelo slug. Se a categoria
+ * existir em `categories` usa o `name` (ja correto pt-BR + Title Case).
+ * Senao, pretty-print do slug (snake_case -> "Snake Case") com Title
+ * Case respeitando conectores curtos. Fallback "—" quando slug e' null.
+ */
+const LOWERCASE_CONNECTORS = new Set([
+  "a", "o", "e", "ou", "de", "da", "do", "das", "dos",
+  "em", "na", "no", "nas", "nos", "com", "por", "para",
+]);
+
+function prettyFromSlug(slug: string): string {
+  return slug
+    .split("_")
+    .map((word, i) =>
+      i > 0 && LOWERCASE_CONNECTORS.has(word)
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(" ");
+}
+
+export function getCategoryLabel(
+  slug: string | null | undefined,
+  categories: FarmCategory[],
+  fallback = "—",
+): string {
+  if (!slug) return fallback;
+  const found = categories.find((c) => c.slug === slug);
+  if (found) return found.name;
+  return prettyFromSlug(slug);
 }
 
 /**

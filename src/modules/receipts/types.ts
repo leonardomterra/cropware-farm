@@ -104,4 +104,8 @@ export interface FarmCategory {
   icon_lucide: string | null;
   direction: ReceiptDirection;
   is_preset: boolean;
+  /** Grupo visual no select (Fazenda, Pessoal, Escritório, Viagem,
+   *  Financeiro, Receitas). Pode ser null para custom user categories
+   *  futuras que nao tenham grupo definido. */
+  group_name: string | null;
 }

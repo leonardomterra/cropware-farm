@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Play, Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -13,20 +14,16 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRecurring } from "../hooks/useRecurring";
+import { useCategories } from "@/modules/receipts/hooks/useCategories";
 import type { Recurring, RecurringInput } from "../types";
-
-const EXPENSE_CATEGORIES = [
-  "combustivel", "defensivos", "sementes", "fertilizantes",
-  "manutencao", "pecas", "frete", "servicos",
-  "alimentacao", "arrendamento", "folha", "outros_despesa",
-];
-const INCOME_CATEGORIES = ["venda_graos", "venda_gado", "outros_receita"];
 
 interface FormState {
   name: string;
@@ -67,8 +64,22 @@ export default function RecurringPage() {
   const [saving, setSaving] = useState(false);
   const [running, setRunning] = useState(false);
 
-  const categories = form.direction === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const { categories: allCategories } = useCategories();
   const showCC = ccs.length > 1;
+
+  // Filtra por direction (expense vs income) e agrupa por group_name
+  // preservando ordem (categories ja vem ordenado do hook).
+  const groupedCategories = (() => {
+    const filtered = allCategories.filter((c) => c.direction === form.direction);
+    const groups: { name: string; items: typeof filtered }[] = [];
+    for (const c of filtered) {
+      const g = c.group_name || "Outras";
+      const last = groups[groups.length - 1];
+      if (last && last.name === g) last.items.push(c);
+      else groups.push({ name: g, items: [c] });
+    }
+    return groups;
+  })();
 
   function openNew() {
     setEditing(null);
@@ -254,10 +265,19 @@ export default function RecurringPage() {
                   value={form.category}
                   onValueChange={(v) => setForm((s) => ({ ...s, category: v }))}
                 >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    {groupedCategories.map((group) => (
+                      <SelectGroup key={group.name}>
+                        <SelectLabel className="text-xs uppercase tracking-wide text-slate-400">
+                          {group.name}
+                        </SelectLabel>
+                        {group.items.map((c) => (
+                          <SelectItem key={c.slug} value={c.slug}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>
@@ -319,7 +339,7 @@ function Section({ title, items, faded, openEdit, handleToggleActive, handleRemo
   const ccName = (id: string | null) => id ? (ccs.find((c) => c.id === id)?.name || "?") : "";
   return (
     <div className="space-y-2">
-      <h2 className="text-[13px] font-medium text-slate-500 tracking-wide">{title}</h2>
+      <h2 className="text-xs font-medium text-slate-500 tracking-wide">{title}</h2>
       <div className={`space-y-2 ${faded ? "opacity-60" : ""}`}>
         {items.map((r) => (
           <div key={r.id} className="bg-white rounded-lg border border-slate-200 p-4 flex items-start gap-3">
@@ -327,9 +347,9 @@ function Section({ title, items, faded, openEdit, handleToggleActive, handleRemo
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-medium text-slate-900 truncate">{r.name}</h3>
-                <span className={`text-[11px] font-medium rounded px-1.5 py-0.5 ${r.direction === "income" ? "text-emerald-700 bg-emerald-50 border border-emerald-200" : "text-slate-700 bg-slate-50 border border-slate-200"}`}>
+                <Badge size="compact" colorScheme={r.direction === "income" ? "emerald" : "slate"}>
                   {r.direction === "income" ? "receita" : "despesa"}
-                </span>
+                </Badge>
               </div>
               <div className="text-sm text-slate-700 mt-1">{fmtBRL(r.total_value)} - dia {r.day_of_month}</div>
               <div className="text-xs text-slate-500 mt-0.5">

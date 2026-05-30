@@ -10,7 +10,12 @@ import { cn } from "@/components/ui/utils";
 import { Badge } from "@/components/ui/badge";
 import type { Receipt } from "../types";
 import { STATUS_COLOR_SCHEME, STATUS_LABEL } from "../constants";
-import { formatBRL, formatDateBR } from "../utils/receiptFormatters";
+import { useCategories } from "../hooks/useCategories";
+import {
+  formatBRL,
+  formatDateBR,
+  getCategoryLabel,
+} from "../utils/receiptFormatters";
 
 interface ReceiptsCardsProps {
   receipts: Receipt[];
@@ -20,6 +25,7 @@ interface ReceiptsCardsProps {
 }
 
 export function ReceiptsCards({ receipts, onView, onEdit, onDelete }: ReceiptsCardsProps) {
+  const { categories } = useCategories();
   return (
     <div className="flex flex-col gap-2">
       {receipts.map((r) => (
@@ -54,7 +60,7 @@ export function ReceiptsCards({ receipts, onView, onEdit, onDelete }: ReceiptsCa
             </div>
             <p className="text-sm text-slate-500 mt-0.5 truncate">
               {formatDateBR(r.transaction_date)}
-              {r.category ? ` - ${r.category}` : ""}
+              {r.category ? ` - ${getCategoryLabel(r.category, categories)}` : ""}
             </p>
             <div className="mt-2">
               <Badge colorScheme={STATUS_COLOR_SCHEME[r.status]}>
