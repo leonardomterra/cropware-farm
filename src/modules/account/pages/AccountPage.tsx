@@ -35,7 +35,7 @@ export default function AccountPage() {
             <dd className="text-slate-900">{user.role}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Organizacao</dt>
+            <dt className="text-slate-500">Organização</dt>
             <dd className="text-slate-900 truncate">{user.organizationName}</dd>
           </div>
         </dl>

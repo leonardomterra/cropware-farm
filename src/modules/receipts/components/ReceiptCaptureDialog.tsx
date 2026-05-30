@@ -81,7 +81,7 @@ export function ReceiptCaptureDialog({
         <div className="space-y-3">
           <p className="text-sm text-slate-500">
             Tire foto do recibo, nota ou cupom. A IA tenta extrair os campos
-            sozinha. Voce revisa antes de salvar.
+            sozinha. Você revisa antes de salvar.
           </p>
 
           {previewSrc ? (
@@ -162,9 +162,9 @@ export function ReceiptCaptureDialog({
 
           {lastScan && (lastScan.scan_error || !lastScan.extracted) ? (
             <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
-              <p className="font-medium">A IA nao conseguiu ler o recibo.</p>
+              <p className="font-medium">A IA não conseguiu ler o recibo.</p>
               <p className="mt-1">
-                A foto foi salva. Voce pode continuar e preencher os campos
+                A foto foi salva. Você pode continuar e preencher os campos
                 manualmente, ou trocar a foto e tentar de novo.
               </p>
               {lastScan.scan_error ? (

@@ -178,7 +178,7 @@ export default function ReceiptsPage() {
     <div>
       <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-base font-medium text-slate-900">Lancamentos</h1>
+          <h1 className="text-base font-medium text-slate-900">Lançamentos</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             Despesas e receitas da fazenda.
           </p>
@@ -216,7 +216,7 @@ export default function ReceiptsPage() {
           </p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-3">
-          <p className="text-sm text-slate-500">Saidas</p>
+          <p className="text-sm text-slate-500">Saídas</p>
           <p className="text-base font-medium text-slate-900 tabular-nums">
             {formatBRL(totalExpenses)}
           </p>

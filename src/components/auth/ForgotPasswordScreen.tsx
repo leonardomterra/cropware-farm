@@ -36,7 +36,7 @@ export function ForgotPasswordScreen({
     return (
       <AuthLayout
         title="Link enviado"
-        subtitle={`Enviamos instrucoes pra ${email}. Olha tambem a caixa de spam.`}
+        subtitle={`Enviamos instruções pra ${email}. Olha também a caixa de spam.`}
       >
         <Button
           type="button"

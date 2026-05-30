@@ -67,10 +67,10 @@ export default function CostCentersPage() {
 
   async function handleArchive(cc: CostCenter) {
     if (cc.is_default) {
-      toast.error("Nao da pra arquivar o centro padrao. Marque outro como padrao primeiro.");
+      toast.error("Não dá pra arquivar o centro padrão. Marque outro como padrão primeiro.");
       return;
     }
-    if (!confirm(`Arquivar "${cc.name}"? Lancamentos existentes continuam la, mas voce nao podera mais criar novos nele.`)) return;
+    if (!confirm(`Arquivar "${cc.name}"? Lançamentos existentes continuam lá, mas você não poderá mais criar novos nele.`)) return;
     const ok = await archive(cc.id);
     if (ok) toast.success("Centro arquivado");
   }

@@ -121,7 +121,7 @@ export default function RecurringPage() {
     }
     setSaving(false);
     if (ok) {
-      toast.success(editing ? "Recorrencia atualizada" : "Recorrencia criada");
+      toast.success(editing ? "Recorrência atualizada" : "Recorrência criada");
       setDialogOpen(false);
     }
   }
@@ -132,7 +132,7 @@ export default function RecurringPage() {
   }
 
   async function handleRemove(r: Recurring) {
-    if (!confirm(`Remover "${r.name}"? Os lancamentos ja gerados continuam.`)) return;
+    if (!confirm(`Remover "${r.name}"? Os lançamentos já gerados continuam.`)) return;
     const ok = await remove(r.id);
     if (ok) toast.success("Removida");
   }
@@ -141,7 +141,7 @@ export default function RecurringPage() {
     setRunning(true);
     const n = await runNow();
     setRunning(false);
-    if (n !== null) toast.success(`${n} lancamento(s) gerado(s)`);
+    if (n !== null) toast.success(`${n} lançamento(s) gerado(s)`);
   }
 
   const active = items.filter((i) => i.active);
@@ -151,9 +151,9 @@ export default function RecurringPage() {
     <div className="max-w-3xl space-y-4">
       <header className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="text-base font-medium text-slate-900">Recorrencias</h1>
+          <h1 className="text-base font-medium text-slate-900">Recorrências</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Contas mensais (energia, internet, salario) que viram lancamento automaticamente.
+            Contas mensais (energia, internet, salário) que viram lançamento automaticamente.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ function Section({ title, items, faded, openEdit, handleToggleActive, handleRemo
   const ccName = (id: string | null) => id ? (ccs.find((c) => c.id === id)?.name || "?") : "";
   return (
     <div className="space-y-2">
-      <h2 className="text-[13px] font-medium text-slate-500 uppercase tracking-wide">{title}</h2>
+      <h2 className="text-[13px] font-medium text-slate-500 tracking-wide">{title}</h2>
       <div className={`space-y-2 ${faded ? "opacity-60" : ""}`}>
         {items.map((r) => (
           <div key={r.id} className="bg-white rounded-lg border border-slate-200 p-4 flex items-start gap-3">

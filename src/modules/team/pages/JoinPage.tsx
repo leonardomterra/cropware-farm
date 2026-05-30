@@ -31,9 +31,9 @@ export default function JoinPage() {
       setLookup(r);
     } catch (e) {
       if (e instanceof ApiError) {
-        if (e.status === 404) setLookupError("Codigo nao encontrado.");
-        else if (e.status === 410) setLookupError("Convite expirado ou ja usado.");
-        else setLookupError("Nao foi possivel validar o codigo.");
+        if (e.status === 404) setLookupError("Código não encontrado.");
+        else if (e.status === 410) setLookupError("Convite expirado ou já usado.");
+        else setLookupError("Não foi possível validar o código.");
       } else {
         setLookupError("Erro de rede.");
       }
@@ -108,7 +108,7 @@ export default function JoinPage() {
           <div className="bg-white rounded-lg border border-slate-200 p-5 space-y-4">
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1">
-                Codigo de convite (6 digitos)
+                Código de convite (6 dígitos)
               </label>
               <Input
                 placeholder="000000"

@@ -207,3 +207,11 @@ select,
   letter-spacing: -0.01em !important;
   text-transform: none !important;
 }
+
+/* SEM TEXTO MAIUSCULO (decisao de design, espelho CDM).
+   Neutraliza a utility .uppercase do Tailwind globalmente: mesmo que
+   alguem adicione `uppercase` numa className de novo, vira no-op.
+   Logo/wordmark usa textTransform inline (nao .uppercase) e fica de fora. */
+.uppercase {
+  text-transform: none !important;
+}

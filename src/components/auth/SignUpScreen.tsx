@@ -55,8 +55,8 @@ export function SignUpScreen({ onGoToLogin }: SignUpScreenProps) {
         title="Conta criada"
         subtitle={
           success.needsConfirmation
-            ? `Confirme seu e-mail (${email}) pra entrar. Olha tambem a caixa de spam.`
-            : "Tudo pronto. Voce ja pode entrar."
+            ? `Confirme seu e-mail (${email}) pra entrar. Olha também a caixa de spam.`
+            : "Tudo pronto. Você já pode entrar."
         }
       >
         <Button

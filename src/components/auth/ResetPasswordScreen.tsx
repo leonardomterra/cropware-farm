@@ -61,7 +61,7 @@ export function ResetPasswordScreen() {
     return (
       <AuthLayout
         title="Senha atualizada"
-        subtitle="Pronto. Voce ja pode entrar com a nova senha."
+        subtitle="Pronto. Você já pode entrar com a nova senha."
       >
         <Button
           type="button"

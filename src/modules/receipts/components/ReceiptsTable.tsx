@@ -27,7 +27,7 @@ export function ReceiptsTable({ receipts, onEdit, onDelete }: ReceiptsTableProps
           <TableRow className="bg-slate-50 hover:bg-slate-50">
             <TableHead className="w-10"></TableHead>
             <TableHead>Data</TableHead>
-            <TableHead>Fornecedor / Descricao</TableHead>
+            <TableHead>Fornecedor / Descrição</TableHead>
             <TableHead>Categoria</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Valor</TableHead>

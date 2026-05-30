@@ -21,7 +21,7 @@ interface NavItem {
 
 const BASE_NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", end: true },
-  { to: "/lancamentos", label: "Lancamentos" },
+  { to: "/lancamentos", label: "Lançamentos" },
   // "Fazendas" escondido do menu em 2026-05-30 - hoje e' um CRUD orfao
   // (farm_id nao e' usado em form de lancamento nem filtro). Rota
   // /fazendas continua valida pra acesso direto via URL. Voltar quando
@@ -30,7 +30,7 @@ const BASE_NAV_ITEMS: NavItem[] = [
 
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: "/centros", label: "Centros" },
-  { to: "/recorrencias", label: "Recorrencias" },
+  { to: "/recorrencias", label: "Recorrências" },
   { to: "/equipe", label: "Equipe" },
 ];
 

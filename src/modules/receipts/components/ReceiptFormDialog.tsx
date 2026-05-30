@@ -382,7 +382,7 @@ export function ReceiptFormDialog({
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Nao informado</SelectItem>
+                  <SelectItem value="none">Não informado</SelectItem>
                   {PAYMENT_METHODS.map((m) => (
                     <SelectItem key={m} value={m}>
                       {PAYMENT_METHOD_LABEL[m]}
@@ -392,7 +392,7 @@ export function ReceiptFormDialog({
               </Select>
             </div>
             <div>
-              <Label htmlFor="invoice_number">Numero da NF</Label>
+              <Label htmlFor="invoice_number">Número da NF</Label>
               <Input
                 id="invoice_number"
                 value={form.invoice_number}
@@ -404,7 +404,7 @@ export function ReceiptFormDialog({
           </div>
 
           <div>
-            <Label htmlFor="description">Descricao</Label>
+            <Label htmlFor="description">Descrição</Label>
             <Input
               id="description"
               value={form.description}

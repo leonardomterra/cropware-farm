@@ -175,9 +175,9 @@ export default function DashboardPage() {
 
       {/* KPIs mes corrente */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <KpiCard label="Entradas (mes)" value={monthKpis.income} tone="positive" loading={loading} />
-        <KpiCard label="Saidas (mes)" value={monthKpis.expense} tone="negative" loading={loading} />
-        <KpiCard label="Saldo (mes)" value={monthKpis.balance} tone={monthKpis.balance >= 0 ? "positive" : "negative"} loading={loading} />
+        <KpiCard label="Entradas (mês)" value={monthKpis.income} tone="positive" loading={loading} />
+        <KpiCard label="Saídas (mês)" value={monthKpis.expense} tone="negative" loading={loading} />
+        <KpiCard label="Saldo (mês)" value={monthKpis.balance} tone={monthKpis.balance >= 0 ? "positive" : "negative"} loading={loading} />
       </div>
 
       {/* Pendentes */}
@@ -189,8 +189,8 @@ export default function DashboardPage() {
 
       {/* Grafico 6 meses */}
       <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <h2 className="text-[13px] font-medium text-slate-500 uppercase tracking-wide mb-3">
-          Entradas x Saidas (6 meses)
+        <h2 className="text-[13px] font-medium text-slate-500 tracking-wide mb-3">
+          Entradas x Saídas (6 meses)
         </h2>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -210,7 +210,7 @@ export default function DashboardPage() {
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="entradas" fill="#10b981" name="Entradas" radius={[2, 2, 0, 0]} />
-              <Bar dataKey="saidas" fill="#64748b" name="Saidas" radius={[2, 2, 0, 0]} />
+              <Bar dataKey="saidas" fill="#64748b" name="Saídas" radius={[2, 2, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -218,7 +218,7 @@ export default function DashboardPage() {
 
       {/* Top categorias de despesa */}
       <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <h2 className="text-[13px] font-medium text-slate-500 uppercase tracking-wide mb-3">
+        <h2 className="text-[13px] font-medium text-slate-500 tracking-wide mb-3">
           Onde mais saiu (6 meses)
         </h2>
         {topCategories.length === 0 ? (
@@ -262,7 +262,7 @@ function KpiCard({ label, value, tone, loading }: { label: string; value: number
 function PendingCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="bg-slate-50 rounded-lg border border-slate-200 p-4">
-      <p className="text-xs text-slate-500 uppercase tracking-wide">{label}</p>
+      <p className="text-xs text-slate-500 tracking-wide">{label}</p>
       <p className={`text-sm font-medium mt-1 ${color}`}>{fmtBRLfull(value)}</p>
     </div>
   );

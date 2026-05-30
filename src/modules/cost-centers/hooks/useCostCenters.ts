@@ -36,9 +36,9 @@ export function useCostCenters() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao criar centro";
       if (msg.includes("max_cost_centers_reached")) {
-        setError("Voce atingiu o limite de 6 centros. Arquive um antes de criar outro.");
+        setError("Você atingiu o limite de 6 centros. Arquive um antes de criar outro.");
       } else if (msg.includes("duplicate_slug")) {
-        setError("Ja existe um centro com esse nome. Escolha outro.");
+        setError("Já existe um centro com esse nome. Escolha outro.");
       } else {
         setError(msg);
       }

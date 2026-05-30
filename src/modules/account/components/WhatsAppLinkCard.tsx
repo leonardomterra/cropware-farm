@@ -27,7 +27,7 @@ export function WhatsAppLinkCard() {
       });
       setCode(r.code);
     } catch {
-      setError("Nao foi possivel gerar o codigo agora. Tente novamente.");
+      setError("Não foi possível gerar o código agora. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ export function WhatsAppLinkCard() {
             </span>
           </div>
           <p className="text-sm text-slate-500">
-            Envie este codigo para o WhatsApp da Cropware Farm. Valido por 10 minutos.
+            Envie este código para o WhatsApp da Cropware Farm. Válido por 10 minutos.
           </p>
           <Button variant="outline" onClick={generate} disabled={loading}>
             {loading ? "Gerando..." : "Gerar outro codigo"}

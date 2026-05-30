@@ -68,7 +68,7 @@ export function ReceiptsCards({ receipts, onEdit, onDelete }: ReceiptsCardsProps
                 variant="ghost"
                 size="icon"
                 className="size-7 shrink-0 -mt-1"
-                aria-label="Acoes"
+                aria-label="Ações"
               >
                 <MoreVertical className="size-4" />
               </Button>

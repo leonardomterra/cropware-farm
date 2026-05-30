@@ -55,7 +55,7 @@ export default function TeamPage() {
 
   function copyCode(code: string) {
     navigator.clipboard.writeText(code);
-    toast.success("Codigo copiado");
+    toast.success("Código copiado");
   }
 
   function copyLink(code: string) {
@@ -135,12 +135,12 @@ export default function TeamPage() {
           <p className="text-sm text-slate-500 p-4">Carregando...</p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-slate-600 text-xs uppercase">
+            <thead className="bg-slate-50 text-slate-600 text-xs">
               <tr>
                 <th className="text-left px-4 py-2 font-medium">Nome</th>
                 <th className="text-left px-4 py-2 font-medium">Role</th>
                 <th className="text-left px-4 py-2 font-medium">Centros</th>
-                <th className="text-right px-4 py-2 font-medium">Acoes</th>
+                <th className="text-right px-4 py-2 font-medium">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -218,9 +218,9 @@ export default function TeamPage() {
                   type="button"
                   onClick={() => copyCode(inv.code)}
                   className="text-xs text-slate-600 hover:text-slate-900 inline-flex items-center gap-1"
-                  title="Copiar codigo"
+                  title="Copiar código"
                 >
-                  <Copy className="size-3" /> Codigo
+                  <Copy className="size-3" /> Código
                 </button>
                 <button
                   type="button"
@@ -253,7 +253,7 @@ export default function TeamPage() {
           {lastInviteCode ? (
             <div className="space-y-4 py-2">
               <p className="text-sm text-slate-700">
-                Convite criado! Compartilhe o codigo abaixo com a pessoa:
+                Convite criado! Compartilhe o código abaixo com a pessoa:
               </p>
               <div className="rounded border border-slate-200 bg-slate-50 px-4 py-4 text-center">
                 <span className="font-mono text-3xl tracking-[0.3em] text-slate-900">
@@ -262,14 +262,14 @@ export default function TeamPage() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => copyCode(lastInviteCode)}>
-                  <Copy className="size-4 mr-1" /> Codigo
+                  <Copy className="size-4 mr-1" /> Código
                 </Button>
                 <Button variant="outline" className="flex-1" onClick={() => copyLink(lastInviteCode)}>
                   <Copy className="size-4 mr-1" /> Link
                 </Button>
               </div>
               <p className="text-xs text-slate-500">
-                Valido por 7 dias. A pessoa precisa entrar em {window.location.origin}/entrar
+                Válido por 7 dias. A pessoa precisa entrar em {window.location.origin}/entrar
               </p>
             </div>
           ) : (

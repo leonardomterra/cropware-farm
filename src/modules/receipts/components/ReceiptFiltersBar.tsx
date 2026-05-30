@@ -134,7 +134,7 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
       </div>
 
       <div>
-        <label className="block text-sm text-slate-500 mb-1">Ate</label>
+        <label className="block text-sm text-slate-500 mb-1">Até</label>
         <Input
           type="date"
           value={value.to ?? ""}
