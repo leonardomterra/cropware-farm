@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Camera, Download, Receipt as ReceiptIcon } from "lucide-react";
+import { Camera, ChevronDown, Download, Receipt as ReceiptIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -12,8 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/components/ui/use-mobile";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReceiptFiltersBar } from "../components/ReceiptFiltersBar";
 import { ReceiptsTable } from "../components/ReceiptsTable";
@@ -181,50 +186,92 @@ export default function ReceiptsPage() {
         <ReceiptFiltersBar value={filters} onChange={setFilters} />
       </div>
 
-      {/* Action row - botoes abaixo dos filtros, alinhados a esquerda. */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        <Button variant="default" onClick={openCreate}>
-          Novo Lançamento
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setCaptureOpen(true)}
-          className="gap-1"
-        >
-          <Camera className="size-4" />
-          Capturar Recibo
-        </Button>
-        <Button
-          variant="outline"
-          onClick={handleExportCsv}
-          disabled={receipts.length === 0}
-          className="gap-1"
-          title="Exportar lançamentos filtrados para CSV (abre no Excel)"
-        >
-          <Download className="size-4" />
-          CSV
-        </Button>
-      </div>
+      {/* Action row + seletor de CC. Botoes a esquerda, dropdown CC
+          a direita (estilo CDM Plot Management - bg-slate-100 h-9).
+          justify-between faz a row ocupar toda a largura da pagina. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="default" onClick={openCreate}>
+            Novo Lançamento
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCaptureOpen(true)}
+            className="gap-1"
+          >
+            <Camera className="size-4" />
+            Capturar Recibo
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportCsv}
+            disabled={receipts.length === 0}
+            className="gap-1"
+            title="Exportar lançamentos filtrados para CSV (abre no Excel)"
+          >
+            <Download className="size-4" />
+            CSV
+          </Button>
+        </div>
 
-      {/* Tabs de CC (filtro adicional, so aparece com 2+ CCs no acesso do user) */}
-      {showTabs && (
-        <div className="mb-3 -mx-1 overflow-x-auto">
-          <Tabs value={activeCCId} onValueChange={setActiveCCId}>
-            <TabsList className="bg-slate-100">
-              <TabsTrigger value="all">Todos</TabsTrigger>
-              {userCCs.map((cc) => (
-                <TabsTrigger key={cc.id} value={cc.id}>
+        {showTabs && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="h-9 inline-flex items-center justify-center gap-1.5 px-3 rounded-md cursor-pointer transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 border-0 text-sm"
+              >
+                {activeCCId !== "all" && (
                   <span
-                    className="size-2 rounded-full mr-1.5 inline-block"
+                    className="size-2 rounded-full inline-block"
+                    style={{
+                      backgroundColor:
+                        userCCs.find((c) => c.id === activeCCId)?.color ||
+                        "#64748b",
+                    }}
+                  />
+                )}
+                <span>
+                  {activeCCId === "all"
+                    ? "Todos os centros"
+                    : userCCs.find((c) => c.id === activeCCId)?.name ||
+                      "Centro"}
+                </span>
+                <ChevronDown className="size-4 text-slate-500" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[180px]">
+              <DropdownMenuItem
+                onClick={() => setActiveCCId("all")}
+                className={
+                  activeCCId === "all"
+                    ? "bg-slate-100 font-medium gap-2"
+                    : "gap-2"
+                }
+              >
+                Todos os centros
+              </DropdownMenuItem>
+              {userCCs.map((cc) => (
+                <DropdownMenuItem
+                  key={cc.id}
+                  onClick={() => setActiveCCId(cc.id)}
+                  className={
+                    activeCCId === cc.id
+                      ? "bg-slate-100 font-medium gap-2"
+                      : "gap-2"
+                  }
+                >
+                  <span
+                    className="size-2 rounded-full inline-block shrink-0"
                     style={{ backgroundColor: cc.color || "#64748b" }}
                   />
                   {cc.name}
-                </TabsTrigger>
+                </DropdownMenuItem>
               ))}
-            </TabsList>
-          </Tabs>
-        </div>
-      )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
 
       {/* KPIs do resultado filtrado */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
