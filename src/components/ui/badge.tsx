@@ -2,7 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "./utils";
+import { cn, toSubtitleCase } from "./utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 const badgeVariants = cva(
@@ -56,8 +56,8 @@ const badgeVariants = cva(
 );
 
 const sizeToFontSize: Record<string, string> = {
-  default: "12px",
-  compact: "12px",
+  default: "12.5px",
+  compact: "12.5px",
 };
 
 function Badge({
@@ -77,6 +77,13 @@ function Badge({
   const fontSize = sizeToFontSize[size || "default"];
   const useShadcnTooltip = truncate && !!title;
 
+  // Badges sempre em Title Case PT-BR: "A Pagar", "Nota de Saida".
+  // So transforma filhos string diretos (labels); nomes/JSX aninhados
+  // (ex.: <span>{user.fullName}</span> no header) ficam intactos.
+  const content = React.Children.map(children, (child) =>
+    typeof child === "string" ? toSubtitleCase(child) : child,
+  );
+
   const badge = (
     <Comp
       data-slot="badge"
@@ -89,7 +96,7 @@ function Badge({
       title={useShadcnTooltip ? undefined : title}
       {...props}
     >
-      {truncate ? <span className="truncate">{children}</span> : children}
+      {truncate ? <span className="truncate">{content}</span> : content}
     </Comp>
   );
 

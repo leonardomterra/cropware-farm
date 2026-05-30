@@ -3,6 +3,7 @@ import { Plus, Star, Archive, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -116,9 +117,7 @@ export default function CostCentersPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-medium text-slate-900 truncate">{cc.name}</h3>
                   {cc.is_default && (
-                    <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-                      padrao
-                    </span>
+                    <Badge size="compact" colorScheme="amber">padrao</Badge>
                   )}
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">slug: {cc.slug}</p>

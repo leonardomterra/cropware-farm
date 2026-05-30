@@ -14,7 +14,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         style: {
           fontWeight: 400,
-          fontSize: '0.95rem',
+          fontSize: '14px',
           padding: '16px 20px',
           maxWidth: 'calc(100vw - 2rem)',
         },

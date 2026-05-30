@@ -101,7 +101,7 @@ export default function JoinPage() {
       <div className="w-full max-w-md space-y-6">
         <div className="text-center">
           <Logo className="h-10 w-auto mx-auto" />
-          <h1 className="text-lg font-medium text-slate-900 mt-4">Entrar na equipe</h1>
+          <h1 className="text-base font-medium text-slate-900 mt-4">Entrar na equipe</h1>
         </div>
 
         {!lookup && (

@@ -117,7 +117,7 @@ export function AuthScreen({
             disabled={submitting || !email || !password}
             style={{
               padding: "13px 0",
-              fontSize: "15px",
+              fontSize: "14px",
               background:
                 "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
               boxShadow: "0 2px 8px rgba(30, 41, 59, 0.3)",

@@ -189,7 +189,7 @@ export default function DashboardPage() {
 
       {/* Grafico 6 meses */}
       <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <h2 className="text-[13px] font-medium text-slate-500 tracking-wide mb-3">
+        <h2 className="text-xs font-medium text-slate-500 tracking-wide mb-3">
           Entradas x Saídas (6 meses)
         </h2>
         <div className="h-72">
@@ -218,7 +218,7 @@ export default function DashboardPage() {
 
       {/* Top categorias de despesa */}
       <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <h2 className="text-[13px] font-medium text-slate-500 tracking-wide mb-3">
+        <h2 className="text-xs font-medium text-slate-500 tracking-wide mb-3">
           Onde mais saiu (6 meses)
         </h2>
         {topCategories.length === 0 ? (

@@ -3,6 +3,7 @@ import { Copy, Trash2, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -151,13 +152,9 @@ export default function TeamPage() {
                     <div className="text-xs text-slate-500">{m.email}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-medium rounded px-2 py-0.5 ${
-                      m.role === "owner" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                      m.role === "admin" ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                      "bg-slate-50 text-slate-700 border border-slate-200"
-                    }`}>
+                    <Badge size="compact" colorScheme={m.role === "owner" ? "amber" : m.role === "admin" ? "blue" : "slate"}>
                       {m.role}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-4 py-3 text-slate-700">
                     {m.cost_center_ids === "all" ? (
