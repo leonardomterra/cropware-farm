@@ -20,6 +20,9 @@ import { STATUS_LABEL } from "../constants";
 interface ReceiptFiltersBarProps {
   value: ReceiptFilters;
   onChange: (next: ReceiptFilters) => void;
+  /** Conteudo extra rendered no final da row de filtros (ex: dropdown
+   *  de Centro de Custo). Fica na mesma flex line dos campos. */
+  trailing?: React.ReactNode;
 }
 
 const STATUS_OPTIONS: ReceiptStatus[] = [
@@ -31,7 +34,7 @@ const STATUS_OPTIONS: ReceiptStatus[] = [
   "cancelado",
 ];
 
-export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
+export function ReceiptFiltersBar({ value, onChange, trailing }: ReceiptFiltersBarProps) {
   const { categories } = useCategories();
 
   const set = <K extends keyof ReceiptFilters>(
@@ -151,6 +154,12 @@ export function ReceiptFiltersBar({ value, onChange }: ReceiptFiltersBarProps) {
           <X className="size-4 mr-1" />
           Limpar
         </Button>
+      ) : null}
+
+      {/* Slot trailing - empurrado pra direita via ml-auto. Flex group
+          pra aceitar varios botoes (ex: CC dropdown + sort dropdown). */}
+      {trailing ? (
+        <div className="ml-auto flex items-center gap-2">{trailing}</div>
       ) : null}
     </div>
   );

@@ -1,6 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Camera, ChevronDown, Download, Receipt as ReceiptIcon } from "lucide-react";
+import {
+  ArrowDownNarrowWide,
+  ArrowUpNarrowWide,
+  Camera,
+  ChevronDown,
+  ClockArrowDown,
+  ClockArrowUp,
+  Download,
+  Receipt as ReceiptIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -93,6 +102,9 @@ export default function ReceiptsPage() {
 
   const [filters, setFilters] = useState<ReceiptFilters>({});
   const [activeCCId, setActiveCCId] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<
+    "recent" | "old" | "value_desc" | "value_asc"
+  >("recent");
   const [formOpen, setFormOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [editing, setEditing] = useState<Receipt | null>(null);
@@ -106,6 +118,27 @@ export default function ReceiptsPage() {
 
   const { receipts, loading, error, refetch } = useReceipts(effectiveFilters);
   const isMobile = useIsMobile();
+
+  // Sort client-side. Default 'recent' usa paid_date || transaction_date
+  // (mais recente primeiro). Tie-break por created order do array.
+  const sortedReceipts = useMemo(() => {
+    const arr = [...receipts];
+    const dateOf = (r: Receipt) => r.paid_date || r.transaction_date || "";
+    switch (sortBy) {
+      case "recent":
+        return arr.sort((a, b) => dateOf(b).localeCompare(dateOf(a)));
+      case "old":
+        return arr.sort((a, b) => dateOf(a).localeCompare(dateOf(b)));
+      case "value_desc":
+        return arr.sort(
+          (a, b) => Number(b.total_value) - Number(a.total_value),
+        );
+      case "value_asc":
+        return arr.sort(
+          (a, b) => Number(a.total_value) - Number(b.total_value),
+        );
+    }
+  }, [receipts, sortBy]);
 
   const totalExpenses = receipts
     .filter((r) => r.direction === "expense")
@@ -181,96 +214,173 @@ export default function ReceiptsPage() {
 
   return (
     <div>
-      {/* Filtros logo abaixo do breadcrumb (pedido Leonardo 2026-05-30). */}
+      {/* Filtros logo abaixo do breadcrumb. CC dropdown + sort dropdown
+          vao pro slot 'trailing' (mesma row dos campos, alinhados a direita). */}
       <div className="mb-3">
-        <ReceiptFiltersBar value={filters} onChange={setFilters} />
+        <ReceiptFiltersBar
+          value={filters}
+          onChange={setFilters}
+          trailing={
+            <>
+              {showTabs && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="h-9 inline-flex items-center justify-center gap-1.5 px-3 rounded-md cursor-pointer transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 border-0 text-sm"
+                    >
+                      {activeCCId !== "all" && (
+                        <span
+                          className="size-2 rounded-full inline-block"
+                          style={{
+                            backgroundColor:
+                              userCCs.find((c) => c.id === activeCCId)
+                                ?.color || "#64748b",
+                          }}
+                        />
+                      )}
+                      <span>
+                        {activeCCId === "all"
+                          ? "Todos os centros"
+                          : userCCs.find((c) => c.id === activeCCId)?.name ||
+                            "Centro"}
+                      </span>
+                      <ChevronDown className="size-4 text-slate-500" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-[180px]">
+                    <DropdownMenuItem
+                      onClick={() => setActiveCCId("all")}
+                      className={
+                        activeCCId === "all"
+                          ? "bg-slate-100 font-medium gap-2"
+                          : "gap-2"
+                      }
+                    >
+                      Todos os centros
+                    </DropdownMenuItem>
+                    {userCCs.map((cc) => (
+                      <DropdownMenuItem
+                        key={cc.id}
+                        onClick={() => setActiveCCId(cc.id)}
+                        className={
+                          activeCCId === cc.id
+                            ? "bg-slate-100 font-medium gap-2"
+                            : "gap-2"
+                        }
+                      >
+                        <span
+                          className="size-2 rounded-full inline-block shrink-0"
+                          style={{
+                            backgroundColor: cc.color || "#64748b",
+                          }}
+                        />
+                        {cc.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* Botao de ordenacao - padrao CDM PlotManagement */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="h-9 inline-flex items-center justify-center gap-1.5 px-3 rounded-md cursor-pointer transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 border-0 text-sm"
+                  >
+                    {sortBy === "recent" && <ClockArrowDown className="size-4" />}
+                    {sortBy === "old" && <ClockArrowUp className="size-4" />}
+                    {sortBy === "value_desc" && (
+                      <ArrowDownNarrowWide className="size-4" />
+                    )}
+                    {sortBy === "value_asc" && (
+                      <ArrowUpNarrowWide className="size-4" />
+                    )}
+                    <span>
+                      {sortBy === "recent" && "Recentes"}
+                      {sortBy === "old" && "Antigos"}
+                      {sortBy === "value_desc" && "Maior valor"}
+                      {sortBy === "value_asc" && "Menor valor"}
+                    </span>
+                    <ChevronDown className="size-4 text-slate-500" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[180px]">
+                  <DropdownMenuItem
+                    onClick={() => setSortBy("recent")}
+                    className={
+                      sortBy === "recent"
+                        ? "bg-slate-100 font-medium gap-2"
+                        : "gap-2"
+                    }
+                  >
+                    <ClockArrowDown className="size-4" />
+                    Mais recentes
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSortBy("old")}
+                    className={
+                      sortBy === "old"
+                        ? "bg-slate-100 font-medium gap-2"
+                        : "gap-2"
+                    }
+                  >
+                    <ClockArrowUp className="size-4" />
+                    Mais antigos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSortBy("value_desc")}
+                    className={
+                      sortBy === "value_desc"
+                        ? "bg-slate-100 font-medium gap-2"
+                        : "gap-2"
+                    }
+                  >
+                    <ArrowDownNarrowWide className="size-4" />
+                    Maior valor
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setSortBy("value_asc")}
+                    className={
+                      sortBy === "value_asc"
+                        ? "bg-slate-100 font-medium gap-2"
+                        : "gap-2"
+                    }
+                  >
+                    <ArrowUpNarrowWide className="size-4" />
+                    Menor valor
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          }
+        />
       </div>
 
-      {/* Action row + seletor de CC. Botoes a esquerda, dropdown CC
-          a direita (estilo CDM Plot Management - bg-slate-100 h-9).
-          justify-between faz a row ocupar toda a largura da pagina. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="default" onClick={openCreate}>
-            Novo Lançamento
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setCaptureOpen(true)}
-            className="gap-1"
-          >
-            <Camera className="size-4" />
-            Capturar Recibo
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExportCsv}
-            disabled={receipts.length === 0}
-            className="gap-1"
-            title="Exportar lançamentos filtrados para CSV (abre no Excel)"
-          >
-            <Download className="size-4" />
-            CSV
-          </Button>
-        </div>
-
-        {showTabs && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="h-9 inline-flex items-center justify-center gap-1.5 px-3 rounded-md cursor-pointer transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 border-0 text-sm"
-              >
-                {activeCCId !== "all" && (
-                  <span
-                    className="size-2 rounded-full inline-block"
-                    style={{
-                      backgroundColor:
-                        userCCs.find((c) => c.id === activeCCId)?.color ||
-                        "#64748b",
-                    }}
-                  />
-                )}
-                <span>
-                  {activeCCId === "all"
-                    ? "Todos os centros"
-                    : userCCs.find((c) => c.id === activeCCId)?.name ||
-                      "Centro"}
-                </span>
-                <ChevronDown className="size-4 text-slate-500" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[180px]">
-              <DropdownMenuItem
-                onClick={() => setActiveCCId("all")}
-                className={
-                  activeCCId === "all"
-                    ? "bg-slate-100 font-medium gap-2"
-                    : "gap-2"
-                }
-              >
-                Todos os centros
-              </DropdownMenuItem>
-              {userCCs.map((cc) => (
-                <DropdownMenuItem
-                  key={cc.id}
-                  onClick={() => setActiveCCId(cc.id)}
-                  className={
-                    activeCCId === cc.id
-                      ? "bg-slate-100 font-medium gap-2"
-                      : "gap-2"
-                  }
-                >
-                  <span
-                    className="size-2 rounded-full inline-block shrink-0"
-                    style={{ backgroundColor: cc.color || "#64748b" }}
-                  />
-                  {cc.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+      {/* Action row - botoes abaixo dos filtros, alinhados a esquerda. */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        <Button variant="default" onClick={openCreate}>
+          Novo Lançamento
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setCaptureOpen(true)}
+          className="gap-1"
+        >
+          <Camera className="size-4" />
+          Capturar Recibo
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleExportCsv}
+          disabled={receipts.length === 0}
+          className="gap-1"
+          title="Exportar lançamentos filtrados para CSV (abre no Excel)"
+        >
+          <Download className="size-4" />
+          CSV
+        </Button>
       </div>
 
       {/* KPIs do resultado filtrado */}
@@ -324,13 +434,13 @@ export default function ReceiptsPage() {
           </p>
           {isMobile ? (
             <ReceiptsCards
-              receipts={receipts}
+              receipts={sortedReceipts}
               onEdit={openEdit}
               onDelete={(r) => setPendingDelete(r)}
             />
           ) : (
             <ReceiptsTable
-              receipts={receipts}
+              receipts={sortedReceipts}
               onEdit={openEdit}
               onDelete={(r) => setPendingDelete(r)}
             />
