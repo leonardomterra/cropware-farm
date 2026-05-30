@@ -7,7 +7,8 @@ import {
   ChevronDown,
   ClockArrowDown,
   ClockArrowUp,
-  Download,
+  FileText,
+  Plus,
   Receipt as ReceiptIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -358,9 +359,12 @@ export default function ReceiptsPage() {
         />
       </div>
 
-      {/* Action row - botoes abaixo dos filtros, alinhados a esquerda. */}
+      {/* Action row - estilo CDM PlotManagement: outline + icone leading.
+          Novo Lancamento + Capturar Recibo sao botoes; Exportar e' dropdown
+          (preparado pra varios formatos: CSV agora, Excel/PDF depois). */}
       <div className="flex flex-wrap gap-2 mb-3">
-        <Button variant="default" onClick={openCreate}>
+        <Button variant="outline" onClick={openCreate} className="gap-1">
+          <Plus className="size-4" />
           Novo Lançamento
         </Button>
         <Button
@@ -371,16 +375,28 @@ export default function ReceiptsPage() {
           <Camera className="size-4" />
           Capturar Recibo
         </Button>
-        <Button
-          variant="outline"
-          onClick={handleExportCsv}
-          disabled={receipts.length === 0}
-          className="gap-1"
-          title="Exportar lançamentos filtrados para CSV (abre no Excel)"
-        >
-          <Download className="size-4" />
-          CSV
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              disabled={receipts.length === 0}
+              className="gap-1"
+            >
+              Exportar
+              <ChevronDown className="size-4 text-slate-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="min-w-[180px]">
+            <DropdownMenuItem
+              onClick={handleExportCsv}
+              className="gap-2"
+              title="Lançamentos filtrados em CSV (abre no Excel)"
+            >
+              <FileText className="size-4" />
+              CSV
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* KPIs do resultado filtrado */}
