@@ -176,30 +176,29 @@ body {
   }
 }
 
-/* Scroll stability: evita layout-shift quando Radix Dialog/Select/etc
-   abrem. Radix usa react-remove-scroll-bar que injeta padding-right no
-   body (compensar scrollbar removida). Forcamos a variavel pra 0px e
-   sobrescrevemos padding/margin no body+html pra anular a tentativa. */
+/* Scroll stability: evita layout-shift quando Radix (Select/Dialog/etc)
+   abre. CAUSA RAIZ do squeeze: forcar `overflow-y: scroll` no html cria
+   uma scrollbar de DOCUMENTO de ~15px. react-remove-scroll le
+   `innerWidth - documentElement.clientWidth` = 15px e injeta padding pra
+   "compensar" ao travar o scroll -> empurra o conteudo.
+
+   No layout atual o scroll vive no <main> (AppShell outer e' 100dvh
+   overflow-hidden), entao o html NAO precisa de scrollbar propria. Sem
+   forcar overflow no html: documento == viewport, gap = 0, nada empurra.
+   O <main> tem scrollbar-gutter:stable proprio (sem shift entre poucos
+   e muitos itens). Telas auth rolam o documento naturalmente quando o
+   conteudo passa da viewport. */
 :root {
   --removed-body-scroll-bar-size: 0px;
 }
-html:root:root {
-  scrollbar-gutter: stable;
-  overflow-y: scroll !important;
+html:root:root,
+html[data-scroll-locked],
+html[style] {
   padding-right: 0 !important;
   margin-right: 0 !important;
 }
 body,
-body[style] {
-  padding-right: 0 !important;
-  margin-right: 0 !important;
-}
-html[data-scroll-locked],
-html[style] {
-  overflow-y: scroll !important;
-  padding-right: 0 !important;
-  margin-right: 0 !important;
-}
+body[style],
 body[data-scroll-locked] {
   padding-right: 0 !important;
   margin-right: 0 !important;
