@@ -119,8 +119,8 @@ export function AuthScreen({
               padding: "13px 0",
               fontSize: "15px",
               background:
-                "linear-gradient(135deg, #64748b 0%, #475569 100%)",
-              boxShadow: "0 2px 8px rgba(71, 85, 105, 0.3)",
+                "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
+              boxShadow: "0 2px 8px rgba(30, 41, 59, 0.3)",
               opacity: submitting || !email || !password ? 0.6 : 1,
               cursor:
                 submitting || !email || !password ? "not-allowed" : "pointer",
@@ -128,13 +128,13 @@ export function AuthScreen({
             onMouseEnter={(e) => {
               if (!submitting && email && password) {
                 e.currentTarget.style.boxShadow =
-                  "0 4px 16px rgba(71, 85, 105, 0.45)";
+                  "0 4px 16px rgba(30, 41, 59, 0.45)";
                 e.currentTarget.style.transform = "translateY(-1px)";
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.boxShadow =
-                "0 2px 8px rgba(71, 85, 105, 0.3)";
+                "0 2px 8px rgba(30, 41, 59, 0.3)";
               e.currentTarget.style.transform = "translateY(0)";
             }}
           >

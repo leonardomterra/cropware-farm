@@ -25,7 +25,6 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <Logo className="h-7 w-auto" />
-          <p className="text-sm text-slate-500 mt-2">A fazenda no celular.</p>
         </div>
         <Card className="shadow-sm">
           <CardHeader>
