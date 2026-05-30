@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   ArrowDownNarrowWide,
@@ -37,6 +37,7 @@ import { ReceiptsTable } from "../components/ReceiptsTable";
 import { ReceiptsCards } from "../components/ReceiptsCards";
 import { ReceiptFormDialog } from "../components/ReceiptFormDialog";
 import { ReceiptCaptureDialog } from "../components/ReceiptCaptureDialog";
+import { ReceiptViewDialog } from "../components/ReceiptViewDialog";
 import { deleteReceipt, useReceipts } from "../hooks/useReceipts";
 import type { ScanResult } from "../hooks/useReceiptScanner";
 import type {
@@ -108,6 +109,8 @@ export default function ReceiptsPage() {
   const [sortBy, setSortBy] = useState<
     "recent" | "old" | "value_desc" | "value_asc"
   >("recent");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [viewing, setViewing] = useState<Receipt | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [captureOpen, setCaptureOpen] = useState(false);
   const [editing, setEditing] = useState<Receipt | null>(null);
@@ -165,6 +168,40 @@ export default function ReceiptsPage() {
     setPrefill(null);
     setFormOpen(true);
   };
+
+  const openView = (r: Receipt) => setViewing(r);
+
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    // Se todos da pagina atual ja estao selecionados, limpa. Senao,
+    // adiciona todos os ids visiveis ao set.
+    const allSelected = receipts.every((r) => selectedIds.has(r.id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        receipts.forEach((r) => next.delete(r.id));
+      } else {
+        receipts.forEach((r) => next.add(r.id));
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  // Limpa selecao quando filtros mudam (selecao de linha que sumiu do
+  // resultado fica orfa - melhor reset).
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [filters, activeCCId]);
 
   const handleScanComplete = (scan: ScanResult) => {
     setEditing(null);
@@ -470,24 +507,47 @@ export default function ReceiptsPage() {
             </div>
           ) : (
             <>
-              <p className="text-sm text-slate-500 mb-2 px-1 inline-flex items-center gap-2">
-                Mostrando {receipts.length}{" "}
-                {receipts.length === 1 ? "lançamento" : "lançamentos"}
-                {isRefetching ? (
-                  <Loader2 className="size-3 animate-spin text-slate-400" />
+              <div className="flex items-center justify-between mb-2 px-1">
+                <p className="text-sm text-slate-500 inline-flex items-center gap-2">
+                  Mostrando {receipts.length}{" "}
+                  {receipts.length === 1 ? "lançamento" : "lançamentos"}
+                  {isRefetching ? (
+                    <Loader2 className="size-3 animate-spin text-slate-400" />
+                  ) : null}
+                </p>
+                {selectedIds.size > 0 ? (
+                  <div className="inline-flex items-center gap-2 text-sm">
+                    <span className="text-slate-700">
+                      {selectedIds.size} selecionado
+                      {selectedIds.size === 1 ? "" : "s"}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={clearSelection}
+                      className="h-7 text-slate-600"
+                    >
+                      Limpar
+                    </Button>
+                  </div>
                 ) : null}
-              </p>
+              </div>
               {isMobile ? (
                 <ReceiptsCards
                   receipts={sortedReceipts}
+                  onView={openView}
                   onEdit={openEdit}
                   onDelete={(r) => setPendingDelete(r)}
                 />
               ) : (
                 <ReceiptsTable
                   receipts={sortedReceipts}
+                  onView={openView}
                   onEdit={openEdit}
                   onDelete={(r) => setPendingDelete(r)}
+                  selectedIds={selectedIds}
+                  onToggleOne={toggleOne}
+                  onToggleAll={toggleAll}
                 />
               )}
             </>
@@ -515,6 +575,15 @@ export default function ReceiptsPage() {
         open={captureOpen}
         onOpenChange={setCaptureOpen}
         onScanComplete={handleScanComplete}
+      />
+
+      <ReceiptViewDialog
+        receipt={viewing}
+        open={viewing !== null}
+        onOpenChange={(o) => {
+          if (!o) setViewing(null);
+        }}
+        onEdit={openEdit}
       />
 
       <AlertDialog

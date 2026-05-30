@@ -14,11 +14,12 @@ import { formatBRL, formatDateBR } from "../utils/receiptFormatters";
 
 interface ReceiptsCardsProps {
   receipts: Receipt[];
+  onView: (r: Receipt) => void;
   onEdit: (r: Receipt) => void;
   onDelete: (r: Receipt) => void;
 }
 
-export function ReceiptsCards({ receipts, onEdit, onDelete }: ReceiptsCardsProps) {
+export function ReceiptsCards({ receipts, onView, onEdit, onDelete }: ReceiptsCardsProps) {
   return (
     <div className="flex flex-col gap-2">
       {receipts.map((r) => (
@@ -74,6 +75,9 @@ export function ReceiptsCards({ receipts, onEdit, onDelete }: ReceiptsCardsProps
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onView(r)}>
+                Ver detalhes
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => onEdit(r)}>
                 Editar
               </DropdownMenuItem>
