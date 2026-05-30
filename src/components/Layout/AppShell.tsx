@@ -1,5 +1,5 @@
-import { useEffect, useState, type ComponentType } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   LogOut,
   Wifi,
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Logo } from "@/components/Logo";
+import { PageBreadcrumb } from "@/components/Layout/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/components/ui/utils";
 
@@ -89,11 +90,26 @@ function useOnline() {
 export function AppShell() {
   const { user, signOut, isAdmin } = useAuth();
   const online = useOnline();
+  const location = useLocation();
   const navItems: NavItem[] = [
     ...BASE_NAV_ITEMS,
     ...(isAdmin ? ADMIN_NAV_ITEMS : []),
     ACCOUNT_NAV_ITEM,
   ];
+
+  // Breadcrumb auto baseado na rota atual. NAV_ITEMS define o label; pra
+  // rotas escondidas (ex: /fazendas) ou desconhecidas usa um fallback do
+  // primeiro segmento do path.
+  const breadcrumbSegments = useMemo(() => {
+    const path = location.pathname;
+    if (path === "/" || path === "") return ["Cropware Farm", "Dashboard"];
+    const lookup = [...BASE_NAV_ITEMS, ...ADMIN_NAV_ITEMS, ACCOUNT_NAV_ITEM]
+      .find((it) => path === it.to || path.startsWith(it.to + "/"));
+    if (lookup) return ["Cropware Farm", lookup.label];
+    const first = path.split("/").filter(Boolean)[0] ?? "";
+    const fallback = first.charAt(0).toUpperCase() + first.slice(1);
+    return fallback ? ["Cropware Farm", fallback] : ["Cropware Farm"];
+  }, [location.pathname]);
 
   return (
     <div
@@ -272,6 +288,9 @@ export function AppShell() {
           ))}
         </div>
       </div>
+
+      {/* BREADCRUMB - "Cropware Farm > <label da rota>". Espelho do CDM. */}
+      <PageBreadcrumb segments={breadcrumbSegments} />
 
       {/* MAIN - flex-1 + min-h-0 garante que o overflow-y-auto ativa
           (sem min-h-0, flex item tem min-height: auto = content size,

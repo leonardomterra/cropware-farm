@@ -176,59 +176,37 @@ export default function ReceiptsPage() {
 
   return (
     <div>
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
-          <h1 className="text-base font-medium text-slate-900">Lançamentos</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Despesas e receitas da fazenda.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportCsv}
-            disabled={receipts.length === 0}
-            className="gap-1"
-            title="Exportar lançamentos filtrados para CSV (abre no Excel)"
-          >
-            <Download className="size-4" />
-            CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setCaptureOpen(true)}
-            className="gap-1"
-          >
-            <Camera className="size-4" />
-            Capturar Recibo
-          </Button>
-          <Button variant="default" onClick={openCreate}>
-            Novo Lançamento
-          </Button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-        <div className="bg-white border border-slate-200 rounded-lg p-3">
-          <p className="text-sm text-slate-500">Entradas</p>
-          <p className="text-base font-medium text-emerald-700 tabular-nums">
-            {formatBRL(totalIncome)}
-          </p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-3">
-          <p className="text-sm text-slate-500">Saídas</p>
-          <p className="text-base font-medium text-slate-900 tabular-nums">
-            {formatBRL(totalExpenses)}
-          </p>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-3 col-span-2 sm:col-span-1">
-          <p className="text-sm text-slate-500">Saldo</p>
-          <p className="text-base font-medium text-farm-primary tabular-nums">
-            {formatBRL(totalIncome - totalExpenses)}
-          </p>
-        </div>
+      {/* Action row - botoes a direita. Sem h1 (breadcrumb ja diz "Lancamentos"). */}
+      <div className="flex justify-end gap-2 mb-3">
+        <Button
+          variant="outline"
+          onClick={handleExportCsv}
+          disabled={receipts.length === 0}
+          className="gap-1"
+          title="Exportar lançamentos filtrados para CSV (abre no Excel)"
+        >
+          <Download className="size-4" />
+          CSV
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setCaptureOpen(true)}
+          className="gap-1"
+        >
+          <Camera className="size-4" />
+          Capturar Recibo
+        </Button>
+        <Button variant="default" onClick={openCreate}>
+          Novo Lançamento
+        </Button>
       </div>
 
+      {/* Filtros logo abaixo do breadcrumb (pedido Leonardo 2026-05-30). */}
+      <div className="mb-3">
+        <ReceiptFiltersBar value={filters} onChange={setFilters} />
+      </div>
+
+      {/* Tabs de CC (filtro adicional, so aparece com 2+ CCs no acesso do user) */}
       {showTabs && (
         <div className="mb-3 -mx-1 overflow-x-auto">
           <Tabs value={activeCCId} onValueChange={setActiveCCId}>
@@ -248,8 +226,26 @@ export default function ReceiptsPage() {
         </div>
       )}
 
-      <div className="mb-3">
-        <ReceiptFiltersBar value={filters} onChange={setFilters} />
+      {/* KPIs do resultado filtrado */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+        <div className="bg-white border border-slate-200 rounded-lg p-3">
+          <p className="text-sm text-slate-500">Entradas</p>
+          <p className="text-base font-medium text-emerald-700 tabular-nums">
+            {formatBRL(totalIncome)}
+          </p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3">
+          <p className="text-sm text-slate-500">Saídas</p>
+          <p className="text-base font-medium text-slate-900 tabular-nums">
+            {formatBRL(totalExpenses)}
+          </p>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-lg p-3 col-span-2 sm:col-span-1">
+          <p className="text-sm text-slate-500">Saldo</p>
+          <p className="text-base font-medium text-farm-primary tabular-nums">
+            {formatBRL(totalIncome - totalExpenses)}
+          </p>
+        </div>
       </div>
 
       {error ? (
